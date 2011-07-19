@@ -53,10 +53,6 @@ void CGUILabelControl::SetCursorPos(int iPos)
   CStdString label = m_infoLabel.GetLabel(m_parentID);
   if (iPos > (int)label.length()) iPos = label.length();
   if (iPos < 0) iPos = 0;
-
-  if (m_iCursorPos != iPos)
-    MarkDirtyRegion();
-
   m_iCursorPos = iPos;
 }
 
@@ -65,12 +61,10 @@ void CGUILabelControl::SetInfo(const CGUIInfoLabel &infoLabel)
   m_infoLabel = infoLabel;
 }
 
-bool CGUILabelControl::UpdateColors()
+void CGUILabelControl::UpdateColors()
 {
-  bool changed = CGUIControl::UpdateColors();
-  changed |= m_label.UpdateColors();
-
-  return changed;
+  m_label.UpdateColors();
+  CGUIControl::UpdateColors();
 }
 
 void CGUILabelControl::UpdateInfo(const CGUIListItem *item)
@@ -100,36 +94,14 @@ void CGUILabelControl::UpdateInfo(const CGUIListItem *item)
   else if (m_bHasPath)
     label = ShortenPath(label);
 
-  bool changed = false;
-
-  changed |= m_label.SetMaxRect(m_posX, m_posY, m_width, m_height);
-  changed |= m_label.SetText(label);
-
-  if (changed)
-    MarkDirtyRegion();
-}
-
-void CGUILabelControl::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
-{
-  bool changed = false;
-
-  changed |= m_label.SetColor(IsDisabled() ? CGUILabel::COLOR_DISABLED : CGUILabel::COLOR_TEXT);
-  changed |= m_label.SetMaxRect(m_posX, m_posY, m_width, m_height);
-  changed |= m_label.Process(currentTime);
-
-  if (changed)
-    MarkDirtyRegion();
-
-  CGUIControl::Process(currentTime, dirtyregions);
-}
-
-CRect CGUILabelControl::CalcRenderRegion() const
-{
-  return m_label.GetRenderRect();
+  m_label.SetMaxRect(m_posX, m_posY, m_width, m_height);
+  m_label.SetText(label);
 }
 
 void CGUILabelControl::Render()
 {
+  m_label.SetColor(IsDisabled() ? CGUILabel::COLOR_DISABLED : CGUILabel::COLOR_TEXT);
+  m_label.SetMaxRect(m_posX, m_posY, m_width, m_height);
   m_label.Render();
   CGUIControl::Render();
 }
@@ -145,25 +117,17 @@ void CGUILabelControl::SetLabel(const string &strLabel)
   m_infoLabel.SetLabel(strLabel, "");
   if (m_iCursorPos > (int)strLabel.size())
     m_iCursorPos = strLabel.size();
-
-  SetInvalid();
 }
 
 void CGUILabelControl::SetWidthControl(float minWidth, bool bScroll)
 {
-  if (m_label.SetScrolling(bScroll) || m_minWidth != minWidth)
-    MarkDirtyRegion();
-
   m_minWidth = minWidth;
+  m_label.SetScrolling(bScroll);
 }
 
 void CGUILabelControl::SetAlignment(uint32_t align)
 {
-  if (m_label.GetLabelInfo().align != align)
-  {
-    MarkDirtyRegion();
-    m_label.GetLabelInfo().align = align;
-  }
+  m_label.GetLabelInfo().align = align;
 }
 
 #define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
@@ -173,13 +137,6 @@ float CGUILabelControl::GetWidth() const
   if (m_minWidth && m_minWidth != m_width)
     return CLAMP(m_label.GetTextWidth(), m_minWidth, m_width);
   return m_width;
-}
-
-void CGUILabelControl::SetWidth(float width)
-{
-  m_width = width;
-  m_label.SetMaxRect(m_posX, m_posY, m_width, m_height);
-  CGUIControl::SetWidth(m_width);
 }
 
 bool CGUILabelControl::OnMessage(CGUIMessage& message)
@@ -226,9 +183,7 @@ CStdString CGUILabelControl::ShortenPath(const CStdString &path)
         nPos = workPath.find_last_of( cDelim );
       }
 
-  if (m_label.SetText(workPath))
-    MarkDirtyRegion();
-
+  m_label.SetText(workPath);
   float textWidth = m_label.GetTextWidth();
 
   while ( textWidth > m_width )
@@ -243,9 +198,7 @@ CStdString CGUILabelControl::ShortenPath(const CStdString &path)
 
     workPath.replace( nPos + 1, nGreaterDelim - nPos - 1, "..." );
 
-    if (m_label.SetText(workPath))
-      MarkDirtyRegion();
-
+    m_label.SetText(workPath);
     textWidth = m_label.GetTextWidth();
   }
   return workPath;

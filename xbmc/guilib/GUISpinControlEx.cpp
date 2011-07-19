@@ -62,22 +62,16 @@ void CGUISpinControlEx::SetInvalid()
   m_buttonControl.SetInvalid();
 }
 
-void CGUISpinControlEx::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
+void CGUISpinControlEx::Render()
 {
   // make sure the button has focus if it should have...
   m_buttonControl.SetFocus(HasFocus());
   m_buttonControl.SetPulseOnSelect(m_pulseOnSelect);
   m_buttonControl.SetEnabled(m_enabled);
+  m_buttonControl.Render();
   if (m_bInvalidated)
     SetPosition(GetXPosition(), GetYPosition());
 
-  m_buttonControl.Process(currentTime, dirtyregions);
-  CGUISpinControl::Process(currentTime, dirtyregions);
-}
-
-void CGUISpinControlEx::Render()
-{
-  m_buttonControl.Render();
   CGUISpinControl::Render();
 }
 
@@ -101,13 +95,17 @@ void CGUISpinControlEx::SetHeight(float height)
   SetPosition(m_buttonControl.GetXPosition(), m_buttonControl.GetYPosition());
 }
 
-bool CGUISpinControlEx::UpdateColors()
+void CGUISpinControlEx::SetVisible(bool bVisible)
 {
-  bool changed = CGUISpinControl::UpdateColors();
-  changed |= m_buttonControl.SetColorDiffuse(m_diffuseColor);
-  changed |= m_buttonControl.UpdateColors();
+  m_buttonControl.SetVisible(bVisible);
+  CGUISpinControl::SetVisible(bVisible);
+}
 
-  return changed;
+void CGUISpinControlEx::UpdateColors()
+{
+  CGUISpinControl::UpdateColors();
+  m_buttonControl.SetColorDiffuse(m_diffuseColor);
+  m_buttonControl.UpdateColors();
 }
 
 void CGUISpinControlEx::SetEnabled(bool bEnable)

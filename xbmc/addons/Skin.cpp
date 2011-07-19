@@ -56,15 +56,15 @@ CSkinInfo::CSkinInfo(const cp_extension_t *ext)
   {
     for (ELEMENTS::iterator i = elements.begin(); i != elements.end(); ++i)
     {
-      int width = atoi(CAddonMgr::Get().GetExtValue(*i, "@width"));
-      int height = atoi(CAddonMgr::Get().GetExtValue(*i, "@height"));
+      float width = (float)atof(CAddonMgr::Get().GetExtValue(*i, "@width"));
+      float height = (float)atof(CAddonMgr::Get().GetExtValue(*i, "@height"));
       bool defRes = CAddonMgr::Get().GetExtValue(*i, "@default").Equals("true");
       CStdString folder = CAddonMgr::Get().GetExtValue(*i, "@folder");
       float aspect = 0;
       CStdStringArray fracs;
       StringUtils::SplitString(CAddonMgr::Get().GetExtValue(*i, "@aspect"), ":", fracs);
       if (fracs.size() == 2)
-        aspect = (float)(atof(fracs[0].c_str())/atof(fracs[1].c_str()));
+        aspect = (float)atof(fracs[0].c_str())/atof(fracs[1].c_str());
       if (width > 0 && height > 0)
       {
         RESOLUTION_INFO res(width, height, aspect, folder);
@@ -203,7 +203,6 @@ bool CSkinInfo::LoadStartupWindows(const cp_extension_t *ext)
 {
   m_startupWindows.clear();
   m_startupWindows.push_back(CStartupWindow(WINDOW_HOME, "513"));
-  m_startupWindows.push_back(CStartupWindow(WINDOW_PVR, "19180"));
   m_startupWindows.push_back(CStartupWindow(WINDOW_PROGRAMS, "0"));
   m_startupWindows.push_back(CStartupWindow(WINDOW_PICTURES, "1"));
   m_startupWindows.push_back(CStartupWindow(WINDOW_MUSIC, "2"));

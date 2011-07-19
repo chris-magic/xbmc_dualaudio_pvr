@@ -42,8 +42,7 @@ public:
   CDVDClock();
   ~CDVDClock();
 
-  double GetClock(bool interpolated = true);
-  double GetClock(double& absolute, bool interpolated = true);
+  double GetClock();
 
   void Discontinuity(double currentPts = 0LL);
 
@@ -58,7 +57,7 @@ public:
 
   bool   SetMaxSpeedAdjust(double speed);
 
-  static double GetAbsoluteClock(bool interpolated = true);
+  static double GetAbsoluteClock();
   static double GetFrequency() { return (double)m_systemFrequency ; }
   static double WaitAbsoluteClock(double target);
 
@@ -69,10 +68,6 @@ public:
   static bool IsMasterClock()                    { return m_ismasterclock;          }
 
 protected:
-  static void   CheckSystemClock();
-  static double SystemToAbsolute(int64_t system);
-  double        SystemToPlaying(int64_t system);
-
   CSharedSection m_critSection;
   int64_t m_systemUsed;
   int64_t m_startClock;

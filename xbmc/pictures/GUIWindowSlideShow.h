@@ -25,7 +25,6 @@
 #include "guilib/GUIWindow.h"
 #include "threads/Thread.h"
 #include "threads/CriticalSection.h"
-#include "threads/Event.h"
 #include "SlideShowPicture.h"
 #include "DllImageLib.h"
 #include "SortFileItem.h"
@@ -52,7 +51,7 @@ private:
   int m_maxWidth;
   int m_maxHeight;
 
-  CEvent m_loadPic;
+  HANDLE m_loadPic;
   bool m_isLoading;
 
   CGUIWindowSlideShow *m_pCallback;
@@ -84,7 +83,6 @@ public:
   virtual bool OnMessage(CGUIMessage& message);
   virtual bool OnAction(const CAction &action);
   virtual void Render();
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &regions);
   virtual void FreeResources();
   void OnLoadPic(int iPic, int iSlideNumber, CBaseTexture* pTexture, int iOriginalWidth, int iOriginalHeight, bool bFullSize);
   int NumSlides() const;
@@ -101,11 +99,9 @@ private:
   void Zoom(int iZoom);
   void Move(float fX, float fY);
   void GetCheckedSize(float width, float height, int &maxWidth, int &maxHeight);
-  int  GetNextSlide();
 
   int m_iCurrentSlide;
   int m_iNextSlide;
-  int m_iDirection;
   int m_iRotate;
   int m_iZoomFactor;
 

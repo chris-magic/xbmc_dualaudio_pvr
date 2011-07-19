@@ -43,7 +43,6 @@ public:
   virtual bool OnAction(const CAction &action);
   virtual bool OnMessage(CGUIMessage& message);
   virtual void FrameMove();
-  virtual void DoProcess(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
 
   void DoModal(int iWindowID = WINDOW_INVALID, const CStdString &param = ""); // modal
@@ -60,17 +59,16 @@ public:
   void SetSound(bool OnOff) { m_enableSound = OnOff; };
 
 protected:
+  virtual bool RenderAnimation(unsigned int time);
   virtual void SetDefaults();
   virtual void OnWindowLoaded();
-  virtual void UpdateVisibility();
 
   friend class CApplicationMessenger;
-  virtual void DoModal_Internal(int iWindowID = WINDOW_INVALID, const CStdString &param = ""); // modal
-  virtual void Show_Internal(); // modeless
+  void DoModal_Internal(int iWindowID = WINDOW_INVALID, const CStdString &param = ""); // modal
+  void Show_Internal(); // modeless
   void Close_Internal(bool forceClose = false);
 
   bool m_bRunning;
-  bool m_wasRunning; ///< \brief true if we were running during the last DoProcess()
   bool m_bModal;
   bool m_dialogClosing;
   bool m_autoClosing;

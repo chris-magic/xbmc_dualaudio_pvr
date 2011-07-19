@@ -44,7 +44,6 @@ public:
   virtual void UpdateResolutions();
 
   virtual void ShowOSMouse(bool show);
-  virtual bool HasCursor();
 
   virtual void NotifyAppActiveChange(bool bActivated);
 

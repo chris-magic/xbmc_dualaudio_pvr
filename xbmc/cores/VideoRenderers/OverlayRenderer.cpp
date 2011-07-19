@@ -59,13 +59,13 @@ COverlay::~COverlay()
 
 COverlay* COverlay::Acquire()
 {
-  AtomicIncrement(&m_references);
+  InterlockedIncrement(&m_references);
   return this;
 }
 
 long COverlay::Release()
 {
-  long count = AtomicDecrement(&m_references);
+  long count = InterlockedDecrement(&m_references);
   if (count == 0)
     delete this;
 
@@ -74,7 +74,7 @@ long COverlay::Release()
 
 long COverlayMainThread::Release()
 {
-  long count = AtomicDecrement(&m_references);
+  long count = InterlockedDecrement(&m_references);
   if (count == 0)
   {
     if (g_application.IsCurrentThread())

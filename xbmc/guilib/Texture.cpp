@@ -229,7 +229,6 @@ bool CBaseTexture::LoadFromFile(const CStdString& texturePath, unsigned int maxW
         if (value)
           rotate = value - 1;
       }
-      CFRelease(imagePropertiesDictionary);
     }
   }
 
@@ -323,43 +322,23 @@ bool CBaseTexture::LoadFromFile(const CStdString& texturePath, unsigned int maxW
   if (originalHeight)
     *originalHeight = image.originalheight;
 
-  unsigned int dstPitch = GetPitch();
+  unsigned int destPitch = GetPitch();
   unsigned int srcPitch = ((image.width + 1)* 3 / 4) * 4; // bitmap row length is aligned to 4 bytes
-
-  unsigned char *dst = m_pixels;
-  unsigned char *src = image.texture + (m_imageHeight - 1) * srcPitch;
 
   for (unsigned int y = 0; y < m_imageHeight; y++)
   {
-    unsigned char *dst2 = dst;
-    unsigned char *src2 = src;
-    for (unsigned int x = 0; x < m_imageWidth; x++, dst2 += 4, src2 += 3)
+    unsigned char *dst = m_pixels + y * destPitch;
+    unsigned char *src = image.texture + (m_imageHeight - 1 - y) * srcPitch;
+    unsigned char *alpha = image.alpha + (m_imageHeight - 1 - y) * m_imageWidth;
+    for (unsigned int x = 0; x < m_imageWidth; x++)
     {
-      dst2[0] = src2[0];
-      dst2[1] = src2[1];
-      dst2[2] = src2[2];
-      dst2[3] = 0xff;
-    }
-    src -= srcPitch;
-    dst += dstPitch;
-  }
-
-  if(image.alpha)
-  {
-    dst = m_pixels + 3;
-    src = image.alpha + (m_imageHeight - 1) * m_imageWidth;
-
-    for (unsigned int y = 0; y < m_imageHeight; y++)
-    {
-      unsigned char *dst2 = dst;
-      unsigned char *src2 = src;
-
-      for (unsigned int x = 0; x < m_imageWidth; x++,  dst2+=4, src2++)
-        *dst2 = *src2;
-      src -= m_imageWidth;
-      dst += dstPitch;
+      *dst++ = *src++;
+      *dst++ = *src++;
+      *dst++ = *src++;
+      *dst++ = (image.alpha) ? *alpha++ : 0xff;
     }
   }
+
   dll.ReleaseImage(&image);
 #endif
 
@@ -410,19 +389,6 @@ unsigned int CBaseTexture::PadPow2(unsigned int x)
   x |= x >> 8;
   x |= x >> 16;
   return ++x;
-}
-
-bool CBaseTexture::SwapBlueRed(unsigned char *pixels, unsigned int height, unsigned int pitch, unsigned int elements, unsigned int offset)
-{
-  if (!pixels) return false;
-  unsigned char *dst = pixels;
-  for (unsigned int y = 0; y < height; y++)
-  {
-    dst = pixels + (y * pitch);
-    for (unsigned int x = 0; x < pitch; x+=elements)
-      std::swap(dst[x+offset], dst[x+2+offset]);
-  }
-  return true;
 }
 
 unsigned int CBaseTexture::GetPitch(unsigned int width) const

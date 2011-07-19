@@ -255,20 +255,6 @@ void CGUIEditControl::OnClick()
     case INPUT_TYPE_SECONDS:
       textChanged = CGUIDialogNumeric::ShowAndGetSeconds(utf8, g_localizeStrings.Get(21420));
       break;
-    case INPUT_TYPE_TIME:
-    {
-      CDateTime dateTime;
-      dateTime.SetFromDBTime(utf8);
-      SYSTEMTIME time;
-      dateTime.GetAsSystemTime(time);
-      if (CGUIDialogNumeric::ShowAndGetTime(time, heading > 0 ? heading : g_localizeStrings.Get(21420)))
-      {
-        dateTime = CDateTime(time);
-        utf8 = dateTime.GetAsLocalizedTime("", false);
-        textChanged = true;
-      }
-      break;
-    }
     case INPUT_TYPE_DATE:
     {
       CDateTime dateTime;
@@ -277,7 +263,7 @@ void CGUIEditControl::OnClick()
         dateTime = CDateTime(2000, 1, 1, 0, 0, 0);
       SYSTEMTIME date;
       dateTime.GetAsSystemTime(date);
-      if (CGUIDialogNumeric::ShowAndGetDate(date, heading > 0 ? heading : g_localizeStrings.Get(21420)))
+      if (CGUIDialogNumeric::ShowAndGetDate(date, g_localizeStrings.Get(21420)))
       {
         dateTime = CDateTime(date);
         utf8 = dateTime.GetAsDBDate();
@@ -377,7 +363,7 @@ void CGUIEditControl::RecalcLabelPosition()
     m_textOffset = 0;
 }
 
-void CGUIEditControl::ProcessText(unsigned int currentTime)
+void CGUIEditControl::RenderText()
 {
   if (m_smsTimer.GetElapsedMilliseconds() > smsDelay)
     UpdateText();
@@ -389,7 +375,6 @@ void CGUIEditControl::ProcessText(unsigned int currentTime)
     RecalcLabelPosition();
   }
 
-  bool changed = false;
 
   float posX = m_label.GetRenderRect().x1;
   float maxTextWidth = m_label.GetMaxWidth();
@@ -399,8 +384,8 @@ void CGUIEditControl::ProcessText(unsigned int currentTime)
   if (leftTextWidth > 0)
   {
     // render the text on the left
-    changed |= m_label.SetColor(GetTextColor());
-    changed |= m_label.Process(currentTime);
+    m_label.SetColor(GetTextColor());
+    m_label.Render();
     
     posX += leftTextWidth + spaceWidth;
     maxTextWidth -= leftTextWidth + spaceWidth;
@@ -432,23 +417,13 @@ void CGUIEditControl::ProcessText(unsigned int currentTime)
       text.Insert(m_cursorPos, col);
     }
 
-    changed |= m_label2.SetMaxRect(posX + m_textOffset, m_posY, maxTextWidth - m_textOffset, m_height);
-    if (text.IsEmpty())
-      changed |= m_label2.SetText(m_hintInfo.GetLabel(GetParentID()));
-    else
-      changed |= m_label2.SetTextW(text);
-    changed |= m_label2.SetAlign(align);
-    changed |= m_label2.SetColor(GetTextColor());
-    changed |= m_label2.Process(currentTime);
+    m_label2.SetMaxRect(posX + m_textOffset, m_posY, maxTextWidth - m_textOffset, m_height);
+    m_label2.SetTextW(text);
+    m_label2.SetAlign(align);
+    m_label2.SetColor(GetTextColor());
+    m_label2.Render();
     g_graphicsContext.RestoreClipRegion();
   }
-  if (changed)
-    MarkDirtyRegion();
-}
-
-void CGUIEditControl::SetHint(const CGUIInfoLabel& hint)
-{
-  m_hintInfo = hint;
 }
 
 CStdStringW CGUIEditControl::GetDisplayedText() const

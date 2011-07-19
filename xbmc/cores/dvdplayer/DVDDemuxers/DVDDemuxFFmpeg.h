@@ -26,8 +26,6 @@
 #include "DllAvCodec.h"
 #include "DllAvUtil.h"
 
-#include "threads/CriticalSection.h"
-
 class CDVDDemuxFFmpeg;
 
 class CDemuxStreamVideoFFmpeg
@@ -119,12 +117,14 @@ protected:
 
   int ReadFrame(AVPacket *packet);
   void AddStream(int iId);
+  void Lock()   { EnterCriticalSection(&m_critSection); }
+  void Unlock() { LeaveCriticalSection(&m_critSection); }
 
   double ConvertTimestamp(int64_t pts, int den, int num);
   void UpdateCurrentPTS();
 
-  CCriticalSection m_critSection;
-  #define MAX_STREAMS 100
+  CRITICAL_SECTION m_critSection;
+  // #define MAX_STREAMS 42 // from avformat.h
   CDemuxStream* m_streams[MAX_STREAMS]; // maximum number of streams that ffmpeg can handle
 
   ByteIOContext* m_ioContext;

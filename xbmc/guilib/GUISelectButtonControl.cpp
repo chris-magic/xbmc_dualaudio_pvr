@@ -60,7 +60,7 @@ CGUISelectButtonControl::CGUISelectButtonControl(int parentID, int controlID,
 CGUISelectButtonControl::~CGUISelectButtonControl(void)
 {}
 
-void CGUISelectButtonControl::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
+void CGUISelectButtonControl::Render()
 {
   if (m_bInvalidated)
   {
@@ -71,8 +71,7 @@ void CGUISelectButtonControl::Process(unsigned int currentTime, CDirtyRegionList
   if (m_bShowSelect)
   {
     // render background, left and right arrow
-    if (m_imgBackground.Process(currentTime))
-      MarkDirtyRegion();
+    m_imgBackground.Render();
 
     CGUILabel::COLOR color = CGUILabel::COLOR_TEXT;
 
@@ -84,16 +83,17 @@ void CGUISelectButtonControl::Process(unsigned int currentTime, CDirtyRegionList
       {
         m_iStartFrame = 0;
         m_bMovedLeft = false;
-        MarkDirtyRegion();
       }
       // If we are moving left
       // render item text as disabled
       color = CGUILabel::COLOR_DISABLED;
     }
 
-    // Update arrow
-    m_imgLeftFocus.Process(currentTime);
-    m_imgLeft.Process(currentTime);
+    // Render arrow
+    if (m_bLeftSelected || m_bMovedLeft)
+      m_imgLeftFocus.Render();
+    else
+      m_imgLeft.Render();
 
     // User has moved right...
     if (m_bMovedRight)
@@ -103,62 +103,13 @@ void CGUISelectButtonControl::Process(unsigned int currentTime, CDirtyRegionList
       {
         m_iStartFrame = 0;
         m_bMovedRight = false;
-        MarkDirtyRegion();
       }
       // If we are moving right
       // render item text as disabled
       color = CGUILabel::COLOR_DISABLED;
     }
 
-    // Update arrow
-    m_imgRightFocus.Process(currentTime);
-    m_imgRight.Process(currentTime);
-
-    // Render text if a current item is available
-    if (m_iCurrentItem >= 0 && (unsigned)m_iCurrentItem < m_vecItems.size())
-    {
-      bool changed = m_label.SetMaxRect(m_posX, m_posY, m_width, m_height);
-      changed |= m_label.SetText(m_vecItems[m_iCurrentItem]);
-      changed |= m_label.SetColor(color);
-      changed |= m_label.Process(currentTime);
-      if (changed)
-        MarkDirtyRegion();
-    }
-
-    // Select current item, if user doesn't
-    // move left or right for 1.5 sec.
-    unsigned int ticksSpan = currentTime - m_ticks;
-    if (ticksSpan > 1500)
-    {
-      // User hasn't moved disable selection mode...
-      m_bShowSelect = false;
-      MarkDirtyRegion();
-
-      // ...and send a thread message.
-      // (Sending a message with SendMessage
-      // can result in a GPF.)
-      CGUIMessage message(GUI_MSG_CLICKED, GetID(), GetParentID() );
-      g_windowManager.SendThreadMessage(message);
-    }
-    CGUIControl::Process(currentTime, dirtyregions);
-  } // if (m_bShowSelect)
-  else
-    CGUIButtonControl::Process(currentTime, dirtyregions);
-}
-
-void CGUISelectButtonControl::Render()
-{
-  if (m_bShowSelect)
-  {
-    // render background, left and right arrow
-    m_imgBackground.Render();
-
-    // Render arrows
-    if (m_bLeftSelected || m_bMovedLeft)
-      m_imgLeftFocus.Render();
-    else
-      m_imgLeft.Render();
-
+    // Render arrow
     if (m_bRightSelected || m_bMovedRight)
       m_imgRightFocus.Render();
     else
@@ -166,15 +117,34 @@ void CGUISelectButtonControl::Render()
 
     // Render text if a current item is available
     if (m_iCurrentItem >= 0 && (unsigned)m_iCurrentItem < m_vecItems.size())
+    {
+      m_label.SetMaxRect(m_posX, m_posY, m_width, m_height);
+      m_label.SetText(m_vecItems[m_iCurrentItem]);
+      m_label.SetColor(color);
       m_label.Render();
+    }
 
-    CGUIControl::Render();
+    // Select current item, if user doesn't
+    // move left or right for 1.5 sec.
+    unsigned int ticksSpan = CTimeUtils::GetFrameTime() - m_ticks;
+    if (ticksSpan > 1500)
+    {
+      // User hasn't moved disable selection mode...
+      m_bShowSelect = false;
+
+      // ...and send a thread message.
+      // (Sending a message with SendMessage
+      // can result in a GPF.)
+      CGUIMessage message(GUI_MSG_CLICKED, GetID(), GetParentID() );
+      g_windowManager.SendThreadMessage(message);
+    }
   } // if (m_bShowSelect)
   else
   {
     // No, render a normal button
     CGUIButtonControl::Render();
   }
+  CGUIControl::Render();
 }
 
 bool CGUISelectButtonControl::OnMessage(CGUIMessage& message)
@@ -223,7 +193,6 @@ bool CGUISelectButtonControl::OnAction(const CAction &action)
     {
       // Enter selection mode
       m_bShowSelect = true;
-      SetInvalid();
 
       // Start timer, if user doesn't select an item
       // or moves left/right. The control will
@@ -240,7 +209,6 @@ bool CGUISelectButtonControl::OnAction(const CAction &action)
     {
       // User has selected an item, disable selection mode...
       m_bShowSelect = false;
-      SetInvalid();
 
       // ...and send a message.
       CGUIMessage message(GUI_MSG_CLICKED, GetID(), GetParentID() );
@@ -252,7 +220,6 @@ bool CGUISelectButtonControl::OnAction(const CAction &action)
       // Disable selection mode when moving up or down
       m_bShowSelect = false;
       m_iCurrentItem = m_iDefaultItem;
-      SetInvalid();
     }
     // call the base class
     return CGUIButtonControl::OnAction(action);
@@ -328,7 +295,6 @@ void CGUISelectButtonControl::OnLeft()
     // Set for visual feedback
     m_bMovedLeft = true;
     m_iStartFrame = 0;
-    SetInvalid();
 
     // Reset timer for automatically selecting
     // the current item.
@@ -355,7 +321,6 @@ void CGUISelectButtonControl::OnRight()
     // Set for visual feedback
     m_bMovedRight = true;
     m_iStartFrame = 0;
-    SetInvalid();
 
     // Reset timer for automatically selecting
     // the current item.
@@ -434,15 +399,13 @@ void CGUISelectButtonControl::SetPosition(float posX, float posY)
   m_imgBackground.SetPosition(posX + backOffX, posY + backOffY);
 }
 
-bool CGUISelectButtonControl::UpdateColors()
+void CGUISelectButtonControl::UpdateColors()
 {
-  bool changed = CGUIButtonControl::UpdateColors();
-  changed |= m_imgLeft.SetDiffuseColor(m_diffuseColor);
-  changed |= m_imgLeftFocus.SetDiffuseColor(m_diffuseColor);
-  changed |= m_imgRight.SetDiffuseColor(m_diffuseColor);
-  changed |= m_imgRightFocus.SetDiffuseColor(m_diffuseColor);
-  changed |= m_imgBackground.SetDiffuseColor(m_diffuseColor);
-
-  return changed;
+  CGUIButtonControl::UpdateColors();
+  m_imgLeft.SetDiffuseColor(m_diffuseColor);
+  m_imgLeftFocus.SetDiffuseColor(m_diffuseColor);
+  m_imgRight.SetDiffuseColor(m_diffuseColor);
+  m_imgRightFocus.SetDiffuseColor(m_diffuseColor);
+  m_imgBackground.SetDiffuseColor(m_diffuseColor);
 }
 

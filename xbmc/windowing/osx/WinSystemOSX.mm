@@ -25,7 +25,6 @@
 // and obj-c's typedef unsigned char BOOL
 #define BOOL XBMC_BOOL 
 #include "WinSystemOSX.h"
-#include "WinEventsOSX.h"
 #include "settings/Settings.h"
 #include "settings/GUISettings.h"
 #include "input/KeyboardStat.h"
@@ -215,7 +214,6 @@ CWinSystemOSX::CWinSystemOSX() : CWinSystemBase()
   m_eWindowSystem = WINDOW_SYSTEM_OSX;
   m_glContext = 0;
   m_SDLSurface = NULL;
-  m_osx_events = NULL;
 }
 
 CWinSystemOSX::~CWinSystemOSX()
@@ -233,16 +231,11 @@ bool CWinSystemOSX::InitWindowSystem()
   if (!CWinSystemBase::InitWindowSystem())
     return false;
   
-  m_osx_events = new CWinEventsOSX();
-
   return true;
 }
 
 bool CWinSystemOSX::DestroyWindowSystem()
 {  
-  delete m_osx_events;
-  m_osx_events = NULL;
-
   if (m_glContext)
   {
     NSOpenGLContext* oldContext = (NSOpenGLContext*)m_glContext;
@@ -760,7 +753,7 @@ void CWinSystemOSX::EnableVSync(bool enable)
   GLint swapInterval;
   
   swapInterval = enable ? 1 : 0;
-  [[NSOpenGLContext currentContext] setValues:(const long int*)&swapInterval forParameter:NSOpenGLCPSwapInterval];
+  [[NSOpenGLContext currentContext] setValues:(const long*)&swapInterval forParameter:NSOpenGLCPSwapInterval];
 }
 
 bool CWinSystemOSX::SwitchToVideoMode(int width, int height, double refreshrate)

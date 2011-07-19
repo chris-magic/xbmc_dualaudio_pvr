@@ -59,6 +59,8 @@ public:
   virtual ~CThread();
   void Create(bool bAutoDelete = false, unsigned stacksize = 0);
   bool WaitForThreadExit(unsigned int milliseconds);
+  DWORD WaitForSingleObject(HANDLE hHandle, unsigned int milliseconds);
+  DWORD WaitForMultipleObjects(DWORD nCount, HANDLE *lpHandles, BOOL bWaitAll, unsigned int milliseconds);
   void Sleep(unsigned int milliseconds);
   bool SetPriority(const int iPriority);
   void SetPrioritySched_RR(void);
@@ -82,31 +84,12 @@ protected:
   virtual void OnException(){} // signal termination handler
   virtual void Process();
 
+#ifdef _LINUX
+  static void term_handler (int signum);
+#endif
+
   volatile bool m_bStop;
   HANDLE m_ThreadHandle;
-
-  enum WaitResponse { WAIT_INTERRUPTED = -1, WAIT_SIGNALED = 0, WAIT_TIMEDOUT = 1 };
-
-  /**
-   * This call will wait on a CEvent in an interruptible way such that if
-   *  stop is called on the thread the wait will return with a respone
-   *  indicating what happened.
-   */
-  inline WaitResponse AbortableWait(CEvent& event, int timeoutMillis)
-  {
-    XbmcThreads::CEventGroup group(&event, &m_StopEvent, NULL);
-    CEvent* result = group.wait(timeoutMillis);
-    return  result == &event ? WAIT_SIGNALED : 
-      (result == NULL ? WAIT_TIMEDOUT : WAIT_INTERRUPTED);
-  }
-
-  inline WaitResponse AbortableWait(CEvent& event)
-  {
-    XbmcThreads::CEventGroup group(&event, &m_StopEvent, NULL);
-    CEvent* result = group.wait();
-    return  result == &event ? WAIT_SIGNALED : 
-      (result == NULL ? WAIT_TIMEDOUT : WAIT_INTERRUPTED);
-  }
 
 private:
   CStdString GetTypeName(void);
@@ -114,7 +97,7 @@ private:
 private:
   ThreadIdentifier ThreadId() const;
   bool m_bAutoDelete;
-  CEvent m_StopEvent;
+  HANDLE m_StopEvent;
   unsigned m_ThreadId; // This value is unreliable on platforms using pthreads
                        // Use m_ThreadHandle->m_hThread instead
   IRunnable* m_pRunnable;
@@ -125,17 +108,12 @@ private:
 
   CStdString m_ThreadName;
 
-#ifdef _LINUX
-  static void term_handler (int signum);
-#endif
-
+private:
 #ifndef _WIN32
   static int staticThread(void* data);
 #else
   static DWORD WINAPI staticThread(LPVOID* data);
 #endif
-
-private:
 };
 
 #endif // !defined(AFX_THREAD_H__ACFB7357_B961_4AC1_9FB2_779526219817__INCLUDED_)

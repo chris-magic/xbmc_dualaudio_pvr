@@ -434,19 +434,19 @@ void CMythSession::Process()
       break;
     case CMYTH_EVENT_RECORDING_LIST_CHANGE:
       CLog::Log(LOGDEBUG, "%s - MythTV event RECORDING_LIST_CHANGE", __FUNCTION__);
-      ResetAllRecordedPrograms();
+      GetAllRecordedPrograms(true);
       break;
     case CMYTH_EVENT_RECORDING_LIST_CHANGE_ADD:
       CLog::Log(LOGDEBUG, "%s - MythTV event RECORDING_LIST_CHANGE_ADD: %s", __FUNCTION__, buf);
-      ResetAllRecordedPrograms();
+      GetAllRecordedPrograms(true);
       break;
     case CMYTH_EVENT_RECORDING_LIST_CHANGE_UPDATE:
       CLog::Log(LOGDEBUG, "%s - MythTV event RECORDING_LIST_CHANGE_UPDATE", __FUNCTION__);
-      ResetAllRecordedPrograms();
+      GetAllRecordedPrograms(true);
       break;
     case CMYTH_EVENT_RECORDING_LIST_CHANGE_DELETE:
       CLog::Log(LOGDEBUG, "%s - MythTV event RECORDING_LIST_CHANGE_DELETE: %s", __FUNCTION__, buf);
-      ResetAllRecordedPrograms();
+      GetAllRecordedPrograms(true);
       break;
     case CMYTH_EVENT_SCHEDULE_CHANGE:
       CLog::Log(LOGDEBUG, "%s - MythTV event SCHEDULE_CHANGE", __FUNCTION__);
@@ -565,14 +565,11 @@ DllLibCMyth* CMythSession::GetLibrary()
   return NULL;
 }
 
-/*
- * The caller must call m_dll->ref_release() when finished.
- */
-cmyth_proglist_t CMythSession::GetAllRecordedPrograms()
+cmyth_proglist_t CMythSession::GetAllRecordedPrograms(bool force)
 {
-  CSingleLock lock(m_section);
-  if (!m_all_recorded)
+  if (!m_all_recorded || force)
   {
+    CSingleLock lock(m_section);
     if (m_all_recorded)
     {
       m_dll->ref_release(m_all_recorded);
@@ -584,24 +581,7 @@ cmyth_proglist_t CMythSession::GetAllRecordedPrograms()
 
     m_all_recorded = m_dll->proglist_get_all_recorded(control);
   }
-  /*
-   * An extra reference is needed to prevent a race condition while resetting the proglist from
-   * the Process() thread while it is being read.
-   */
-  m_dll->ref_hold(m_all_recorded);
-
   return m_all_recorded;
-}
-
-void CMythSession::ResetAllRecordedPrograms()
-{
-  CSingleLock lock(m_section);
-  if (m_all_recorded)
-  {
-    m_dll->ref_release(m_all_recorded);
-    m_all_recorded = NULL;
-  }
-  return;
 }
 
 void CMythSession::LogCMyth(int level, char *msg)

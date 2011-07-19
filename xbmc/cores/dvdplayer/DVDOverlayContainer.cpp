@@ -21,23 +21,26 @@
 
 #include "DVDOverlayContainer.h"
 #include "DVDInputStreams/DVDInputStreamNavigator.h"
-#include "threads/SingleLock.h"
+
 
 CDVDOverlayContainer::CDVDOverlayContainer()
 {
   m_overlays.clear();
+  InitializeCriticalSection(&m_critSection);
 }
 
 CDVDOverlayContainer::~CDVDOverlayContainer()
 {
   Clear();
+
+  DeleteCriticalSection(&m_critSection);
 }
 
 void CDVDOverlayContainer::Add(CDVDOverlay* pOverlay)
 {
   pOverlay->Acquire();
 
-  CSingleLock lock(*this);
+  EnterCriticalSection(&m_critSection);
 
   // markup any non ending overlays, to finish
   // when this new one starts, there can be
@@ -60,6 +63,7 @@ void CDVDOverlayContainer::Add(CDVDOverlay* pOverlay)
 
   m_overlays.push_back(pOverlay);
 
+  LeaveCriticalSection(&m_critSection);
 }
 
 VecOverlays* CDVDOverlayContainer::GetOverlays()
@@ -72,10 +76,9 @@ VecOverlaysIter CDVDOverlayContainer::Remove(VecOverlaysIter itOverlay)
   VecOverlaysIter itNext;
   CDVDOverlay* pOverlay = *itOverlay;
 
-  {
-    CSingleLock lock(*this);
-    itNext = m_overlays.erase(itOverlay);
-  }
+  EnterCriticalSection(&m_critSection);
+  itNext = m_overlays.erase(itOverlay);
+  LeaveCriticalSection(&m_critSection);
 
   pOverlay->Release();
 
@@ -86,7 +89,7 @@ void CDVDOverlayContainer::CleanUp(double pts)
 {
   CDVDOverlay* pOverlay = NULL;
 
-  CSingleLock lock(*this);
+  EnterCriticalSection(&m_critSection);
 
   VecOverlaysIter it = m_overlays.begin();
   while (it != m_overlays.end())
@@ -125,6 +128,7 @@ void CDVDOverlayContainer::CleanUp(double pts)
     it++;
   }
 
+  LeaveCriticalSection(&m_critSection);
 }
 
 void CDVDOverlayContainer::Remove()
@@ -133,12 +137,13 @@ void CDVDOverlayContainer::Remove()
   {
     CDVDOverlay* pOverlay;
 
-    {
-      CSingleLock lock(*this);
+    EnterCriticalSection(&m_critSection);
 
-      pOverlay = m_overlays.front();
-      m_overlays.erase(m_overlays.begin());
-    }
+    pOverlay = m_overlays.front();
+    m_overlays.erase(m_overlays.begin());
+
+    LeaveCriticalSection(&m_critSection);
+
     pOverlay->Release();
   }
 }
@@ -157,7 +162,7 @@ bool CDVDOverlayContainer::ContainsOverlayType(DVDOverlayType type)
 {
   bool result = false;
 
-  CSingleLock lock(*this);
+  EnterCriticalSection(&m_critSection);
 
   VecOverlaysIter it = m_overlays.begin();
   while (!result && it != m_overlays.end())
@@ -165,6 +170,8 @@ bool CDVDOverlayContainer::ContainsOverlayType(DVDOverlayType type)
     if (((CDVDOverlay*)*it)->IsOverlayType(type)) result = true;
     it++;
   }
+
+  LeaveCriticalSection(&m_critSection);
 
   return result;
 }
@@ -174,7 +181,7 @@ bool CDVDOverlayContainer::ContainsOverlayType(DVDOverlayType type)
  */
 void CDVDOverlayContainer::UpdateOverlayInfo(CDVDInputStreamNavigator* pStream, CDVDDemuxSPU *pSpu, int iAction)
 {
-  CSingleLock lock(*this);
+  EnterCriticalSection(&m_critSection);
 
   //Update any forced overlays.
   for(VecOverlays::iterator it = m_overlays.begin(); it != m_overlays.end(); it++ )
@@ -204,4 +211,5 @@ void CDVDOverlayContainer::UpdateOverlayInfo(CDVDInputStreamNavigator* pStream, 
       }
     }
   }
+  LeaveCriticalSection(&m_critSection);
 }

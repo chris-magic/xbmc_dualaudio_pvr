@@ -45,16 +45,18 @@ using namespace std;
 using namespace PYXBMC;
 
 CGUIPythonWindowXML::CGUIPythonWindowXML(int id, CStdString strXML, CStdString strFallBackPath)
-  : CGUIMediaWindow(id, strXML), m_actionEvent(true)
+: CGUIMediaWindow(id, strXML)
 {
   pCallbackWindow = NULL;
   m_threadState = NULL;
+  m_actionEvent = CreateEvent(NULL, true, false, NULL);
   m_loadOnDemand = false;
   m_scriptPath = strFallBackPath;
 }
 
 CGUIPythonWindowXML::~CGUIPythonWindowXML(void)
 {
+  CloseHandle(m_actionEvent);
 }
 
 bool CGUIPythonWindowXML::Update(const CStdString &strPath)
@@ -64,13 +66,8 @@ bool CGUIPythonWindowXML::Update(const CStdString &strPath)
 
 bool CGUIPythonWindowXML::OnAction(const CAction &action)
 {
-  bool ret = false;
-  // if we don't have callback window or we don't want to close window
   // do the base class window first, and the call to python after this
-  if (!pCallbackWindow || !(action.GetID() == ACTION_NAV_BACK || action.GetID() == ACTION_PREVIOUS_MENU))
-    ret = CGUIWindow::OnAction(action);  // we don't currently want the mediawindow actions here
-  else
-    ret = true;
+  bool ret = CGUIWindow::OnAction(action);  // we don't currently want the mediawindow actions here
   if(pCallbackWindow)
   {
     PyXBMCAction* inf = new PyXBMCAction(pCallbackWindow);
@@ -266,12 +263,12 @@ void CGUIPythonWindowXML::ClearList()
 void CGUIPythonWindowXML::WaitForActionEvent(unsigned int timeout)
 {
   g_pythonParser.WaitForEvent(m_actionEvent, timeout);
-  m_actionEvent.Reset();
+  ResetEvent(m_actionEvent);
 }
 
 void CGUIPythonWindowXML::PulseActionEvent()
 {
-  m_actionEvent.Set();
+  SetEvent(m_actionEvent);
 }
 
 void CGUIPythonWindowXML::AllocResources(bool forceLoad /*= FALSE */)
@@ -347,10 +344,10 @@ void CGUIPythonWindowXML::FreeResources(bool forceUnLoad /*= FALSE */)
   CGUIMediaWindow::FreeResources(forceUnLoad);
 }
 
-void CGUIPythonWindowXML::Process(unsigned int currentTime, CDirtyRegionList &regions)
+void CGUIPythonWindowXML::Render()
 {
   g_TextureManager.AddTexturePath(m_mediaDir);
-  CGUIMediaWindow::Process(currentTime, regions);
+  CGUIMediaWindow::Render();
   g_TextureManager.RemoveTexturePath(m_mediaDir);
 }
 

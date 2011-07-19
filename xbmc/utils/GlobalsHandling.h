@@ -98,6 +98,7 @@
 
 namespace xbmcutil
 {
+
   /**
    * This class is an implementation detail of the macros defined below and
    *  is NOT meant to be used as a general purpose utility. IOW, DO NOT USE THIS
@@ -118,29 +119,14 @@ namespace xbmcutil
   template <class T> class GlobalsSingleton
   {
     /**
-     * This thing just deletes the shared_ptr when the 'instance'
-     * goes out of scope (when the bss segment of the compilation unit
-     * that 'instance' is sitting in is deinitialized). See the comment
-     * on 'instance' for more information.
-     */
-    template <class K> class Deleter
-    {
-    public:
-      K* guarded;
-      ~Deleter() { if (guarded) delete guarded; }
-    };
-
-    /**
      * Is it possible that getInstance can be called prior to the shared_ptr 'instance'
      *  being initialized as a global? If so, then the shared_ptr constructor would 
      *  effectively 'reset' the shared pointer after it had been set by the prior 
      *  getInstance call, and a second instance would be created. We really don't 
      *  want this to happen so 'instance' is a pointer to a smart pointer so that
-     *  we can deterministally handle its construction. It is guarded by the 
-     *  Deleter class above so that when the bss segment that this static is
-     *  sitting in is deinitialized, the shared_ptr pointer will be cleaned up.
+     *  we can deterministally handle its construction.
      */
-    static Deleter<boost::shared_ptr<T> > instance; 
+    static boost::shared_ptr<T>* instance; 
 
     /**
      * See 'getQuick' below.
@@ -154,13 +140,13 @@ namespace xbmcutil
      */
     inline static boost::shared_ptr<T> getInstance()
     {
-      if (!instance.guarded)
+      if (!instance)
       {
         if (!quick)
           quick = new T;
-        instance.guarded = new boost::shared_ptr<T>(quick);
+        instance = new boost::shared_ptr<T>(quick);
       }
-      return *(instance.guarded);
+      return *instance;
     }
 
     /**
@@ -180,7 +166,7 @@ namespace xbmcutil
 
   };
 
-  template <class T> typename GlobalsSingleton<T>::template Deleter<boost::shared_ptr<T> > GlobalsSingleton<T>::instance;
+  template <class T> boost::shared_ptr<T>* GlobalsSingleton<T>::instance;
   template <class T> T* GlobalsSingleton<T>::quick;
 }
 

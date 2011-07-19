@@ -52,8 +52,6 @@ protected:
   int  m_id;
   ADDON::AddonPtr addon;
 
-  void setSource(const CStdString &src);
-
   virtual void OnStartup();
   virtual void Process();
   virtual void OnExit();

@@ -41,20 +41,6 @@ CGUICheckMarkControl::CGUICheckMarkControl(int parentID, int controlID, float po
 CGUICheckMarkControl::~CGUICheckMarkControl(void)
 {}
 
-void CGUICheckMarkControl::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
-{
-  bool changed = false;
-
-  changed |= m_imgCheckMark.Process(currentTime);
-  changed |= m_imgCheckMarkNoFocus.Process(currentTime);
-  changed |= m_label.Process(currentTime);
-
-  if (changed)
-    MarkDirtyRegion();
-
-  CGUIControl::Process(currentTime, dirtyregions);
-}
-
 void CGUICheckMarkControl::Render()
 {
   m_label.SetText(m_strLabel);
@@ -174,11 +160,7 @@ EVENT_RESULT CGUICheckMarkControl::OnMouseEvent(const CPoint &point, const CMous
 
 void CGUICheckMarkControl::SetLabel(const string &label)
 {
-  if (m_strLabel != label)
-  {
-    m_strLabel = label;
-    SetInvalid();
-  }
+  m_strLabel = label;
 }
 
 void CGUICheckMarkControl::PythonSetLabel(const CStdString &strFont, const string &strText, color_t textColor)
@@ -187,7 +169,6 @@ void CGUICheckMarkControl::PythonSetLabel(const CStdString &strFont, const strin
   m_label.GetLabelInfo().textColor = textColor;
   m_label.GetLabelInfo().focusedColor = textColor;
   m_strLabel = strText;
-  SetInvalid();
 }
 
 void CGUICheckMarkControl::PythonSetDisabledColor(color_t disabledColor)
@@ -195,12 +176,10 @@ void CGUICheckMarkControl::PythonSetDisabledColor(color_t disabledColor)
   m_label.GetLabelInfo().disabledColor = disabledColor;
 }
 
-bool CGUICheckMarkControl::UpdateColors()
+void CGUICheckMarkControl::UpdateColors()
 {
-  bool changed = CGUIControl::UpdateColors();
-  changed |= m_label.UpdateColors();
-  changed |= m_imgCheckMark.SetDiffuseColor(m_diffuseColor);
-  changed |= m_imgCheckMarkNoFocus.SetDiffuseColor(m_diffuseColor);
-
-  return changed;
+  m_label.UpdateColors();
+  CGUIControl::UpdateColors();
+  m_imgCheckMark.SetDiffuseColor(m_diffuseColor);
+  m_imgCheckMarkNoFocus.SetDiffuseColor(m_diffuseColor);
 }

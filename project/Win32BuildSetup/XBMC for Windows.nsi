@@ -264,7 +264,7 @@ Section "Uninstall"
   Delete "$INSTDIR\xbmc.log"
   Delete "$INSTDIR\xbmc.old.log"
   Delete "$INSTDIR\python26.dll"
-  Delete "$INSTDIR\libcdio-12.dll"
+  Delete "$INSTDIR\libcdio-10.dll"
   RMDir /r "$INSTDIR\language"
   RMDir /r "$INSTDIR\media"
   RMDir /r "$INSTDIR\plugins"
@@ -310,26 +310,18 @@ SectionEnd
 ;--------------------------------
 ;vs redist installer Section
 
-Section "Microsoft Visual C++ 2008/2010 Redistributable Package (x86)" SEC_VCREDIST
+Section "Microsoft Visual C++ 2010 Redistributable Package (x86)" SEC_VCREDIST
 
   SectionIn 1 2
   
+  SetOutPath "$TEMP"
+  File "${xbmc_root}\Xbmc\vcredist_x86.exe"
   DetailPrint "Running VS Redist Setup..."
-
-  ;vc90 for python
-  SetOutPath "$TEMP\vc2008"
-  File "${xbmc_root}\..\dependencies\vcredist\2008\vcredist_x86.exe"
-  ExecWait '"$TEMP\vc2008\vcredist_x86.exe" /q' $VSRedistSetupError
-  RMDir /r "$TEMP\vc2008"
-  
-  ;vc100
-  SetOutPath "$TEMP\vc2010"
-  File "${xbmc_root}\..\dependencies\vcredist\2010\vcredist_x86.exe"
-  DetailPrint "Running VS Redist Setup..."
-  ExecWait '"$TEMP\vc2010\vcredist_x86.exe" /q' $VSRedistSetupError
-  RMDir /r "$TEMP\vc2010"
- 
+  ExecWait '"$TEMP\vcredist_x86.exe" /q' $VSRedistSetupError
   DetailPrint "Finished VS Redist Setup"
+ 
+  Delete "$TEMP\vcredist_x86.exe"
+ 
   SetOutPath "$INSTDIR"
 SectionEnd
 
@@ -337,11 +329,9 @@ SectionEnd
 ;DirectX webinstaller Section
 
 !if "${xbmc_target}" == "dx"
-!define DXVERSIONDLL "$SYSDIR\D3DX9_43.dll"
-
 Section "DirectX Install" SEC_DIRECTX
  
-  SectionIn 1 2
+  SectionIn 1 2 RO
 
   DetailPrint "Running DirectX Setup..."
 
@@ -363,15 +353,8 @@ SectionEnd
 
 Section "-Check DirectX installation" SEC_DIRECTXCHECK
 
-  IfFileExists ${DXVERSIONDLL} +2 0
+  IfFileExists $SYSDIR\D3DX9_43.dll +2 0
     MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "DirectX9 wasn't installed properly.$\nPlease download the DirectX End-User Runtime from Microsoft and install it again."
 
 SectionEnd
-
-Function .onInit
-  # set section 'SEC_DIRECTX' as selected and read-only if required dx version not found
-  IfFileExists ${DXVERSIONDLL} +3 0
-  IntOp $0 ${SF_SELECTED} | ${SF_RO}
-  SectionSetFlags ${SEC_DIRECTX} $0
-FunctionEnd
 !endif

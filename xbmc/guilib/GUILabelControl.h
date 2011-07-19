@@ -44,15 +44,12 @@ public:
   virtual ~CGUILabelControl(void);
   virtual CGUILabelControl *Clone() const { return new CGUILabelControl(*this); };
 
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
   virtual void UpdateInfo(const CGUIListItem *item = NULL);
   virtual bool CanFocus() const;
   virtual bool OnMessage(CGUIMessage& message);
   virtual CStdString GetDescription() const;
   virtual float GetWidth() const;
-  virtual void SetWidth(float width);
-  virtual CRect CalcRenderRegion() const;
  
   const CLabelInfo& GetLabelInfo() const { return m_label.GetLabelInfo(); };
   void SetLabel(const std::string &strLabel);
@@ -65,7 +62,7 @@ public:
   void SetHighlight(unsigned int start, unsigned int end);
 
 protected:
-  bool UpdateColors();
+  void UpdateColors();
   CStdString ShortenPath(const CStdString &path);
 
   CGUILabel m_label;

@@ -127,13 +127,8 @@ void CFileItemHandler::HandleFileItem(const char *ID, bool allowFile, const char
 
   if (allowFile && hasFileField)
   {
-    if (item->HasVideoInfoTag())
-    {
-      if (!item->GetVideoInfoTag()->m_strFileNameAndPath.IsEmpty())
-        object["file"] = item->GetVideoInfoTag()->m_strFileNameAndPath.c_str();
-      else if (!item->GetVideoInfoTag()->m_strPath.IsEmpty())
-        object["file"] = item->GetVideoInfoTag()->m_strPath.c_str();
-    }
+    if (item->HasVideoInfoTag() && !item->GetVideoInfoTag()->m_strFileNameAndPath.IsEmpty())
+      object["file"] = item->GetVideoInfoTag()->m_strFileNameAndPath.c_str();
     if (item->HasMusicInfoTag() && !item->GetMusicInfoTag()->GetURL().IsEmpty())
       object["file"] = item->GetMusicInfoTag()->GetURL().c_str();
 
@@ -177,7 +172,7 @@ void CFileItemHandler::HandleFileItem(const char *ID, bool allowFile, const char
     }
   }
 
-  if (hasThumbnailField)
+  if (hasThumbnailField && !item->GetThumbnailImage().IsEmpty())
     object["thumbnail"] = item->GetThumbnailImage().c_str();
 
   if (item->HasVideoInfoTag())
@@ -204,7 +199,7 @@ bool CFileItemHandler::FillFileItemList(const CVariant &parameterObject, CFileIt
   CFileOperations::FillFileItemList(parameterObject, list);
 
   CStdString file = parameterObject["file"].asString();
-  if (!file.empty() && (URIUtils::IsURL(file) || (CFile::Exists(file) && !CDirectory::Exists(file))))
+  if (!file.empty() && !CDirectory::Exists(file) && (URIUtils::IsURL(file) || CFile::Exists(file)))
   {
     bool added = false;
     for (int index = 0; index < list.Size(); index++)

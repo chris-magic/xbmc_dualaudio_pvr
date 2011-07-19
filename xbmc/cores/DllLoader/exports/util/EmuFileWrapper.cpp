@@ -21,12 +21,14 @@
  
 #include "EmuFileWrapper.h"
 #include "filesystem/File.h"
-#include "threads/SingleLock.h"
+#include "threads/Mutex.h"
 
 CEmuFileWrapper g_emuFileWrapper;
 
 CEmuFileWrapper::CEmuFileWrapper()
 {
+  InitializeCriticalSection(&m_criticalSection);
+
   // since we always use dlls we might just initialize it directly
   for (int i = 0; i < MAX_EMULATED_FILES; i++)
   {
@@ -38,11 +40,12 @@ CEmuFileWrapper::CEmuFileWrapper()
 
 CEmuFileWrapper::~CEmuFileWrapper()
 {
+  DeleteCriticalSection(&m_criticalSection);
 }
 
 void CEmuFileWrapper::CleanUp()
 {
-  CSingleLock lock(m_criticalSection);
+  EnterCriticalSection(&m_criticalSection);
   for (int i = 0; i < MAX_EMULATED_FILES; i++)
   {
     if (m_files[i].used)
@@ -60,13 +63,14 @@ void CEmuFileWrapper::CleanUp()
       m_files[i].file_emu._file = -1;
     }
   }
+  LeaveCriticalSection(&m_criticalSection);
 }
 
 EmuFileObject* CEmuFileWrapper::RegisterFileObject(XFILE::CFile* pFile)
 {
   EmuFileObject* object = NULL;
 
-  CSingleLock lock(m_criticalSection);
+  EnterCriticalSection(&m_criticalSection);
 
   for (int i = 0; i < MAX_EMULATED_FILES; i++)
   {
@@ -77,10 +81,12 @@ EmuFileObject* CEmuFileWrapper::RegisterFileObject(XFILE::CFile* pFile)
       object->used = true;
       object->file_xbmc = pFile;
       object->file_emu._file = (i + FILE_WRAPPER_OFFSET);
-      object->file_lock = new CCriticalSection();
+      object->file_lock = new CMutex();
       break;
     }
   }
+
+  LeaveCriticalSection(&m_criticalSection);
 
   return object;
 }
@@ -92,7 +98,7 @@ void CEmuFileWrapper::UnRegisterFileObjectByDescriptor(int fd)
   {
     if (m_files[i].used)
     {
-      CSingleLock lock(m_criticalSection);
+      EnterCriticalSection(&m_criticalSection);
 
       // we assume the emulated function alreay deleted the CFile object
       if (m_files[i].used)
@@ -106,6 +112,8 @@ void CEmuFileWrapper::UnRegisterFileObjectByDescriptor(int fd)
         m_files[i].used = false;
         m_files[i].file_emu._file = -1;
       }
+
+      LeaveCriticalSection(&m_criticalSection);
     }
   }
 }
@@ -125,7 +133,7 @@ void CEmuFileWrapper::LockFileObjectByDescriptor(int fd)
   {
     if (m_files[i].used)
     {
-      m_files[i].file_lock->lock();
+      m_files[i].file_lock->Wait();
     }
   }
 }
@@ -137,7 +145,7 @@ bool CEmuFileWrapper::TryLockFileObjectByDescriptor(int fd)
   { 
     if (m_files[i].used)
     {   
-      return m_files[i].file_lock->try_lock();
+      return m_files[i].file_lock->WaitMSec(0);
     }
   }
   return false;
@@ -150,7 +158,7 @@ void CEmuFileWrapper::UnlockFileObjectByDescriptor(int fd)
   { 
     if (m_files[i].used)
     {   
-      m_files[i].file_lock->unlock();
+      m_files[i].file_lock->Release();
     }
   }
 }

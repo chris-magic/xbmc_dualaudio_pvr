@@ -39,7 +39,6 @@
 
 #include "Edl.h"
 #include "FileItem.h"
-#include "threads/SingleLock.h"
 
 
 class CDVDInputStream;
@@ -48,11 +47,6 @@ class CDVDDemux;
 class CDemuxStreamVideo;
 class CDemuxStreamAudio;
 class CStreamInfo;
-
-namespace PVR
-{
-  class CPVRChannel;
-}
 
 #define DVDSTATE_NORMAL           0x00000001 // normal dvd state
 #define DVDSTATE_STILL            0x00000002 // currently displaying a still frame
@@ -107,8 +101,6 @@ typedef struct
   CDemuxStream::EFlags flags;
   int          source;
   int          id;
-  std::string  codec;
-  int          channels;
 } SelectionStream;
 
 class CSelectionStreams
@@ -184,7 +176,6 @@ public:
   virtual int GetSubtitleCount();
   virtual int GetSubtitle();
   virtual void GetSubtitleName(int iStream, CStdString &strStreamName);
-  virtual void GetSubtitleLanguage(int iStream, CStdString &strStreamLang);
   virtual void SetSubtitle(int iStream);
   virtual bool GetSubtitleVisible();
   virtual void SetSubtitleVisible(bool bVisible);
@@ -228,29 +219,22 @@ public:
 
   virtual CStdString GetPlayingTitle();
 
-  virtual bool SwitchChannel(const PVR::CPVRChannel &channel);
-
   enum ECacheState
   { CACHESTATE_DONE = 0
   , CACHESTATE_FULL     // player is filling up the demux queue
-  , CACHESTATE_PVR      // player is waiting for some data in each buffer
   , CACHESTATE_INIT     // player is waiting for first packet of each stream
   , CACHESTATE_PLAY     // player is waiting for players to not be stalled
   , CACHESTATE_FLUSH    // temporary state player will choose startup between init or full
   };
 
-  virtual bool IsCaching() const { return m_caching == CACHESTATE_FULL || m_caching == CACHESTATE_PVR; }
+  virtual bool IsCaching() const { return m_caching == CACHESTATE_FULL; }
   virtual int GetCacheLevel() const ;
 
   virtual int OnDVDNavResult(void* pData, int iMessage);
 protected:
   friend class CSelectionStreams;
-
-  class StreamLock : public CSingleLock
-  {
-  public:
-    inline StreamLock(CDVDPlayer* cdvdplayer) : CSingleLock(cdvdplayer->m_critStreamSection) {}
-  };
+  void LockStreams()                                            { EnterCriticalSection(&m_critStreamSection); }
+  void UnlockStreams()                                          { LeaveCriticalSection(&m_critStreamSection); }
 
   virtual void OnStartup();
   virtual void OnExit();
@@ -270,8 +254,6 @@ protected:
   void ProcessVideoData(CDemuxStream* pStream, DemuxPacket* pPacket);
   void ProcessSubData(CDemuxStream* pStream, DemuxPacket* pPacket);
   void ProcessTeletextData(CDemuxStream* pStream, DemuxPacket* pPacket);
-
-  bool ShowPVRChannelInfo();
 
   int  AddSubtitleFile(const std::string& filename, const std::string& subfilename = "", CDemuxStream::EFlags flags = CDemuxStream::FLAG_NONE);
 
@@ -317,12 +299,10 @@ protected:
 
   bool m_bAbortRequest;
 
-  std::string  m_filename; // holds the actual filename
-  std::string  m_mimetype;  // hold a hint to what content file contains (mime type)
-  ECacheState  m_caching;
-  CFileItem    m_item;
-  unsigned int m_scanStart;
-  long         m_ChannelEntryTimeOut;
+  std::string m_filename; // holds the actual filename
+  std::string m_mimetype;  // hold a hint to what content file contains (mime type)
+  ECacheState m_caching;
+  CFileItem   m_item;
 
 
   CCurrentStream m_CurrentAudio;
@@ -387,7 +367,6 @@ protected:
       dts           = DVD_NOPTS_VALUE;
       player_state  = "";
       chapter       = 0;
-      chapter_name  = "";
       chapter_count = 0;
       canrecord     = false;
       recording     = false;
@@ -426,7 +405,7 @@ protected:
   CCriticalSection m_StateSection;
 
   CEvent m_ready;
-  CCriticalSection m_critStreamSection; // need to have this lock when switching streams (audio / video)
+  CRITICAL_SECTION m_critStreamSection; // need to have this lock when switching streams (audio / video)
 
   CEdl m_Edl;
 

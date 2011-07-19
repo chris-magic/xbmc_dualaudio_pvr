@@ -20,15 +20,17 @@
  */
 
 #include "DownloadQueueManager.h"
-#include "threads/SingleLock.h"
+
 #include <assert.h>
 
 CDownloadQueueManager::CDownloadQueueManager()
 {
+  InitializeCriticalSection(&m_critical);
 }
 
 CDownloadQueueManager::~CDownloadQueueManager(void)
 {
+  DeleteCriticalSection(&m_critical);
 }
 
 VOID CDownloadQueueManager::Initialize()
@@ -38,31 +40,38 @@ VOID CDownloadQueueManager::Initialize()
 
 TICKET CDownloadQueueManager::RequestContent(const CStdString& aUrl, IDownloadQueueObserver* aObserver)
 {
-  CSingleLock lock(m_critical);
-  return GetNextDownloadQueue()->RequestContent(aUrl, aObserver);
+  EnterCriticalSection(&m_critical);
+  TICKET ticket = GetNextDownloadQueue()->RequestContent(aUrl, aObserver);
+  LeaveCriticalSection(&m_critical);
+  return ticket;
 }
 
 TICKET CDownloadQueueManager::RequestFile(const CStdString& aUrl, const CStdString& aFilePath, IDownloadQueueObserver* aObserver)
 {
-  CSingleLock lock(m_critical);
-  return GetNextDownloadQueue()->RequestFile(aUrl, aFilePath, aObserver);
+  EnterCriticalSection(&m_critical);
+  TICKET ticket = GetNextDownloadQueue()->RequestFile(aUrl, aFilePath, aObserver);
+  LeaveCriticalSection(&m_critical);
+  return ticket;
 }
 
 TICKET CDownloadQueueManager::RequestFile(const CStdString& aUrl, IDownloadQueueObserver* aObserver)
 {
-  CSingleLock lock(m_critical);
-  return GetNextDownloadQueue()->RequestFile(aUrl, aObserver);
+  EnterCriticalSection(&m_critical);
+  TICKET ticket = GetNextDownloadQueue()->RequestFile(aUrl, aObserver);
+  LeaveCriticalSection(&m_critical);
+  return ticket;
 }
 
 void CDownloadQueueManager::CancelRequests(IDownloadQueueObserver *aObserver)
 {
-  CSingleLock lock(m_critical);
+  EnterCriticalSection(&m_critical);
   // run through all our queues and remove all requests from this observer
   for (QUEUEPOOL::iterator it = m_queues.begin(); it != m_queues.end(); ++it)
   {
     CDownloadQueue* downloadQueue = *it;
     downloadQueue->CancelRequests(aObserver);
   }
+  LeaveCriticalSection(&m_critical);
 }
 
 CDownloadQueue* CDownloadQueueManager::GetNextDownloadQueue()

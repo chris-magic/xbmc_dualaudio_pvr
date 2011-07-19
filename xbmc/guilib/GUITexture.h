@@ -88,22 +88,21 @@ public:
   CGUITextureBase(const CGUITextureBase &left);
   virtual ~CGUITextureBase(void);
 
-  bool Process(unsigned int currentTime);
   void Render();
 
   void DynamicResourceAlloc(bool bOnOff);
-  bool AllocResources();
+  void AllocResources();
   void FreeResources(bool immediately = false);
   void SetInvalid();
 
-  bool SetVisible(bool visible);
-  bool SetAlpha(unsigned char alpha);
-  bool SetDiffuseColor(color_t color);
-  bool SetPosition(float x, float y);
-  bool SetWidth(float width);
-  bool SetHeight(float height);
-  bool SetFileName(const CStdString &filename);
-  bool SetAspectRatio(const CAspectRatio &aspect);
+  void SetVisible(bool visible);
+  void SetAlpha(unsigned char alpha);
+  void SetDiffuseColor(color_t color);
+  void SetPosition(float x, float y);
+  void SetWidth(float width);
+  void SetHeight(float height);
+  void SetFileName(const CStdString &filename);
+  void SetAspectRatio(const CAspectRatio &aspect);
 
   const CStdString& GetFileName() const { return m_info.filename; };
   float GetTextureWidth() const { return m_frameWidth; };
@@ -121,10 +120,10 @@ public:
   bool FailedToAlloc() const { return m_isAllocated == NORMAL_FAILED || m_isAllocated == LARGE_FAILED; };
   bool ReadyToRender() const;
 protected:
-  bool CalculateSize();
+  void CalculateSize();
   void LoadDiffuseImage();
-  bool AllocateOnDemand();
-  bool UpdateAnimFrame();
+  void AllocateOnDemand();
+  void UpdateAnimFrame();
   void Render(float left, float top, float bottom, float right, float u1, float v1, float u2, float v2, float u3, float v3);
   void OrientateTexture(CRect &rect, float width, float height, int orientation);
 

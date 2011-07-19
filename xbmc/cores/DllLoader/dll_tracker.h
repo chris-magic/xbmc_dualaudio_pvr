@@ -23,7 +23,6 @@
  */
 
 #include "threads/CriticalSection.h"
-#include "PlatformDefs.h"
 #ifdef _WIN32
 #include "system.h" // for SOCKET
 #endif
@@ -66,6 +65,9 @@ typedef std::list<HMODULE>::iterator DllListIter;
 typedef std::list<uintptr_t> DummyList;
 typedef std::list<uintptr_t>::iterator DummyListIter;
 
+typedef std::list<LPCRITICAL_SECTION> CriticalSectionList;
+typedef std::list<LPCRITICAL_SECTION>::iterator CriticalSectionListIter;
+
 typedef std::list<SOCKET> SocketList;
 typedef std::list<SOCKET>::iterator SocketListIter;
 
@@ -91,6 +93,7 @@ typedef struct _DllTrackInfo
 
   FileList fileList;
   SocketList socketList;
+  CriticalSectionList criticalSectionList;
 
   HeapObjectList heapobjectList;
 

@@ -27,7 +27,6 @@
 #include "guilib/LocalizeStrings.h"
 #include "utils/AutoPtrHandle.h"
 #include "utils/log.h"
-#include "ThumbnailCache.h"
 
 using namespace XFILE;
 using namespace AUTOPTR;
@@ -397,9 +396,9 @@ bool CMusicInfoTagLoaderMP4::Load(const CStdString& strFileName, CMusicInfoTag& 
       // other non-tagged files don't get this album image
       CStdString strCoverArt;
       if (!tag.GetAlbum().IsEmpty() && (!tag.GetAlbumArtist().IsEmpty() || !tag.GetArtist().IsEmpty()))
-        strCoverArt = CThumbnailCache::GetAlbumThumb(&tag);
+        strCoverArt = CUtil::GetCachedAlbumThumb(tag.GetAlbum(), tag.GetAlbumArtist().IsEmpty() ? tag.GetArtist() : tag.GetAlbumArtist());
       else
-        strCoverArt = CThumbnailCache::GetMusicThumb(tag.GetURL());
+        strCoverArt = CUtil::GetCachedMusicThumb(tag.GetURL());
       if (!CUtil::ThumbExists(strCoverArt))
       {
         if (CPicture::CreateThumbnailFromMemory( m_thumbData, m_thumbSize, "", strCoverArt ) )

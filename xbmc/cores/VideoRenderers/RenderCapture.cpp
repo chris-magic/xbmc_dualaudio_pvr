@@ -23,7 +23,6 @@
 #include "utils/log.h"
 #include "windowing/WindowingFactory.h"
 #include "utils/fastmemcpy.h"
-#include "settings/GUISettings.h"
 
 CRenderCaptureBase::CRenderCaptureBase()
 {
@@ -76,19 +75,14 @@ void CRenderCaptureGL::BeginRender()
   if (!m_asyncChecked)
   {
 #ifndef HAS_GLES
-    bool usePbo = g_guiSettings.GetBool("videoplayer.usepbo");
-    m_asyncSupported = g_Windowing.IsExtSupported("GL_ARB_occlusion_query") &&
-                       g_Windowing.IsExtSupported("GL_ARB_pixel_buffer_object") &&
-                       usePbo;
+    m_asyncSupported = g_Windowing.IsExtSupported("GL_ARB_occlusion_query") && g_Windowing.IsExtSupported("GL_ARB_pixel_buffer_object");
 
     if (m_flags & CAPTUREFLAG_CONTINUOUS)
     {
       if (!g_Windowing.IsExtSupported("GL_ARB_occlusion_query"))
         CLog::Log(LOGWARNING, "CRenderCaptureGL: GL_ARB_occlusion_query not supported, performance might suffer");
-      if (!g_Windowing.IsExtSupported("GL_ARB_pixel_buffer_object"))
+      if (!g_Windowing.IsExtSupported("GL_ARB_occlusion_query"))
         CLog::Log(LOGWARNING, "CRenderCaptureGL: GL_ARB_pixel_buffer_object not supported, performance might suffer");
-      if (!usePbo)
-        CLog::Log(LOGWARNING, "CRenderCaptureGL: GL_ARB_pixel_buffer_object disabled, performance might suffer");
     }
 #endif
     m_asyncChecked = true;
@@ -100,20 +94,11 @@ void CRenderCaptureGL::BeginRender()
     if (!m_pbo)
       glGenBuffersARB(1, &m_pbo);
 
-    //only use a query when not capturing immediately
-    if (!m_query && !(m_flags & CAPTUREFLAG_IMMEDIATELY))
-    {
+    if (!m_query)
       glGenQueriesARB(1, &m_query);
-    }
-    else if (m_query && (m_flags & CAPTUREFLAG_IMMEDIATELY))
-    { //clean up any old query if the previous capture was not immediately
-      glDeleteQueriesARB(1, &m_query);
-      m_query = 0;
-    }
 
     //start the occlusion query
-    if (m_query)
-      glBeginQueryARB(GL_SAMPLES_PASSED_ARB, m_query);
+    glBeginQueryARB(GL_SAMPLES_PASSED_ARB, m_query);
 
     //allocate data on the pbo and pixel buffer
     glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, m_pbo);
@@ -143,9 +128,7 @@ void CRenderCaptureGL::EndRender()
   if (m_asyncSupported)
   {
     glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0);
-
-    if (m_query)
-      glEndQueryARB(GL_SAMPLES_PASSED_ARB);
+    glEndQueryARB(GL_SAMPLES_PASSED_ARB);
 
     if (m_flags & CAPTUREFLAG_IMMEDIATELY)
       PboToBuffer();
@@ -182,10 +165,8 @@ void CRenderCaptureGL::ReadOut()
     //when it is, the write into the pbo is probably done as well,
     //so it can be mapped and read without a busy wait
 
-    GLuint readout = 1;
-    if (m_query)
-      glGetQueryObjectuivARB(m_query, GL_QUERY_RESULT_AVAILABLE_ARB, &readout);
-
+    GLuint readout;
+    glGetQueryObjectuivARB(m_query, GL_QUERY_RESULT_AVAILABLE_ARB, &readout);
     if (readout)
       PboToBuffer();
   }

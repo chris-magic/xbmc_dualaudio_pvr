@@ -14,7 +14,7 @@ APP=$(SOURCE)/$(APPNAME)
 APPBIN=$(TOOLCHAIN)/bin/$(APPNAME)
 YASM=$(PREFIX)/bin/$(APPNAME)
 
-all: $(YASM)
+all: $(APPBIN) $(YASM)
 
 $(TARBALLS_LOCATION)/$(ARCHIVE):
 	$(RETRIEVE_TOOL) $(RETRIEVE_TOOL_FLAGS) $(BASE_URL)/$(ARCHIVE)
@@ -33,11 +33,12 @@ $(APPBIN):
 	make -C $(SOURCE) install
 
 $(YASM): $(APPBIN)
-	rm -f $(YASM); ln -s $(APPBIN) $(YASM)
+	ln -s $(APPBIN) $(YASM)
 
 clean:
 	make -C $(SOURCE) clean
+	rm -f $(APPBIN) $(YASM)
 
 distclean::
-	rm -rf $(SOURCE)
+	rm -rf $(SOURCE) $(APPBIN) $(YASM)
 

@@ -30,6 +30,12 @@ using namespace std;
 using namespace XFILE;
 using namespace PYXBMC;
 
+#ifndef __GNUC__
+#pragma code_seg("PY_TEXT")
+#pragma data_seg("PY_DATA")
+#pragma bss_seg("PY_BSS")
+#pragma const_seg("PY_RDATA")
+#endif
 
 #if defined(__GNUG__) && (__GNUC__>4) || (__GNUC__==4 && __GNUC_MINOR__>=2)
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
@@ -51,13 +57,13 @@ extern "C" {
     
     // copy() method
     PyDoc_STRVAR(copy__doc__,
-      "copy(source, destination) -- Copy file to destination, returns true/false.\n"
+      "copy(source, destination) -- copy file to destination, returns true/false.\n"
       "\n"
       "source          : file to copy.\n"
-      "destination     : destination file\n"
+      "destination     : destination file"
       "\n"
       "example:\n"
-      " - success = xbmcvfs.copy(source, destination)\n");
+      "  success = xbmcvfs.copy(source, destination)\n");
     
     PyObject* vfs_copy(PyObject *self, PyObject *args)
     {
@@ -85,12 +91,12 @@ extern "C" {
       return Py_BuildValue((char*)"b", bResult);
     }
     PyDoc_STRVAR(delete__doc__,
-      "delete(file) -- Delete file\n"
+      "delete(file)\n"
       "\n"
-      "file        : file to delete\n"
+      "file        : file to delete"
       "\n"
       "example:\n"
-      " - xbmcvfs.delete(file)\n");
+      "  xbmcvfs.delete(file)\n");
     
     // delete a file
     PyObject* vfs_delete(File *self, PyObject *args, PyObject *kwds)
@@ -116,13 +122,13 @@ extern "C" {
     }
     
     PyDoc_STRVAR(rename__doc__,
-      "rename(file, newFileName) -- Rename file, returns true/false.\n"
+      "rename(file, newFileName)\n"
       "\n"
-      "file        : file to reaname\n"
-      "newFileName : new filename, including the full path\n"
+      "file        : file to reaname"
+      "newFileName : new filename, including the full path"
       "\n"
       "example:\n"
-      " - success = xbmcvfs.rename(file, newFileName)\n");
+      "  success = xbmcvfs.rename(file,newFileName)\n");
     
     // rename a file
     PyObject* vfs_rename(File *self, PyObject *args, PyObject *kwds)
@@ -153,12 +159,12 @@ extern "C" {
     }  
 
     PyDoc_STRVAR(exists__doc__,
-      "exists(path) -- Check if file exists, returns true/false.\n"
+      "exists(path)\n"
       "\n"
-      "path        : file or folder\n"
+      "path        : file or folder"
       "\n"
       "example:\n"
-      " - success = xbmcvfs.exists(path)\n");
+      "  success = xbmcvfs.exists(path)\n");
    
     // check for a file or folder existance, mimics Pythons os.path.exists()
     PyObject* vfs_exists(File *self, PyObject *args, PyObject *kwds)

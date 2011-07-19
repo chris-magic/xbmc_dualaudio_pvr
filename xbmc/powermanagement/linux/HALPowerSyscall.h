@@ -37,7 +37,6 @@ public:
   virtual bool CanSuspend();
   virtual bool CanHibernate();
   virtual bool CanReboot();
-  virtual int  BatteryLevel();
 
 private:
   bool QueryCapability(const char *capability);

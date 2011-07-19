@@ -20,57 +20,32 @@
  */
 
 #include "GUIDialogBusy.h"
-#include "guilib/GUIWindowManager.h"
 
 CGUIDialogBusy::CGUIDialogBusy(void)
 : CGUIDialog(WINDOW_DIALOG_BUSY, "DialogBusy.xml")
 {
   m_loadOnDemand = false;
-  m_bModal = true;
 }
 
 CGUIDialogBusy::~CGUIDialogBusy(void)
 {
 }
 
-void CGUIDialogBusy::Show_Internal()
+bool CGUIDialogBusy::OnMessage(CGUIMessage& message)
 {
-  m_bCanceled = false;
-  m_bRunning = true;
-  m_bModal = true;
-  m_bLastVisible = true;
-  m_dialogClosing = false;
-  g_windowManager.RouteToWindow(this);
-
-  // active this window...
-  CGUIMessage msg(GUI_MSG_WINDOW_INIT, 0, 0);
-  OnMessage(msg);
-}
-
-void CGUIDialogBusy::DoProcess(unsigned int currentTime, CDirtyRegionList &dirtyregions)
-{
-  bool visible = g_windowManager.GetTopMostModalDialogID() == WINDOW_DIALOG_BUSY;
-  if(!visible && m_bLastVisible)
-    dirtyregions.push_back(m_renderRegion);
-  m_bLastVisible = visible;
-  CGUIDialog::DoProcess(currentTime, dirtyregions);
-}
-
-void CGUIDialogBusy::Render()
-{
-  if(!m_bLastVisible)
-    return;
-  CGUIDialog::Render();
-}
-
-bool CGUIDialogBusy::OnAction(const CAction &action)
-{
-  if(action.GetID() == ACTION_NAV_BACK 
-  || action.GetID() == ACTION_PREVIOUS_MENU)
+  switch ( message.GetMessage() )
   {
-    m_bCanceled = true;
-    return true;
+  case GUI_MSG_WINDOW_INIT:
+    {
+      CGUIDialog::OnMessage(message);
+      return true;
+    }
+    break;
+
+  case GUI_MSG_WINDOW_DEINIT:
+    {
+    }
+    break;
   }
-  else
-    return CGUIDialog::OnAction(action);
+  return CGUIDialog::OnMessage(message);
 }

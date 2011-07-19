@@ -1,5 +1,4 @@
 SRCS= \
-      WinEventsOSX.mm \
       WinSystemOSX.mm \
       WinSystemOSXGL.mm
      

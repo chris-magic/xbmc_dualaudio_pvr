@@ -60,25 +60,10 @@ void CGUIListLabel::SetFocus(bool focus)
     SetScrolling(false);
 }
 
-CRect CGUIListLabel::CalcRenderRegion() const
+void CGUIListLabel::UpdateColors()
 {
-  return m_label.GetRenderRect();
-}
-
-bool CGUIListLabel::UpdateColors()
-{
-  bool changed = CGUIControl::UpdateColors();
-  changed |= m_label.UpdateColors();
-
-  return changed;
-}
-
-void CGUIListLabel::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
-{
-  if (m_label.Process(currentTime))
-    MarkDirtyRegion();
-
-  CGUIControl::Process(currentTime, dirtyregions);
+  m_label.UpdateColors();
+  CGUIControl::UpdateColors();
 }
 
 void CGUIListLabel::Render()
@@ -102,18 +87,6 @@ void CGUIListLabel::SetInvalid()
 {
   m_label.SetInvalid();
   CGUIControl::SetInvalid();
-}
-
-void CGUIListLabel::SetWidth(float width)
-{
-  m_width = width;
-  if (m_label.GetLabelInfo().align & XBFONT_RIGHT)
-    m_label.SetMaxRect(m_posX - m_width, m_posY, m_width, m_height);
-  else if (m_label.GetLabelInfo().align & XBFONT_CENTER_X)
-    m_label.SetMaxRect(m_posX - m_width*0.5f, m_posY, m_width, m_height);
-  else
-    m_label.SetMaxRect(m_posX, m_posY, m_posX + m_width, m_posY + m_height);
-  CGUIControl::SetWidth(m_width);
 }
 
 void CGUIListLabel::SetLabel(const CStdString &label)

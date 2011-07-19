@@ -30,8 +30,6 @@
 #include "interfaces/Builtins.h"
 #include "interfaces/AnnouncementManager.h"
 #include "guilib/LocalizeStrings.h"
-#include "guilib/GraphicContext.h"
-#include "dialogs/GUIDialogKaiToast.h"
 
 #ifdef HAS_LCD
 #include "utils/LCDFactory.h"
@@ -169,10 +167,7 @@ bool CPowerManager::CanReboot()
 {
   return m_instance->CanReboot();
 }
-int CPowerManager::BatteryLevel()
-{
-  return m_instance->BatteryLevel();
-}
+
 void CPowerManager::ProcessEvents()
 {
   m_instance->PumpPowerEvents(this);
@@ -245,7 +240,7 @@ void CPowerManager::OnLowBattery()
 {
   CLog::Log(LOGNOTICE, "%s: Running low battery jobs", __FUNCTION__);
 
-  CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Warning, g_localizeStrings.Get(13050), "");
+  g_application.m_guiDialogKaiToast.QueueNotification(CGUIDialogKaiToast::Warning, g_localizeStrings.Get(13050), "");
 
   CAnnouncementManager::Announce(System, "xbmc", "OnLowBattery");
 }

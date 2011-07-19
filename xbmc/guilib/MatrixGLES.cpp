@@ -90,16 +90,14 @@ void CMatrixGLES::PushMatrix()
     GLfloat *matrix = new GLfloat[16];
     memcpy(matrix, m_pMatrix, sizeof(GLfloat)*16);
     m_matrices[m_matrixMode].push_back(matrix);
-    m_pMatrix = matrix;
   }
 }
 
 void CMatrixGLES::PopMatrix()
 {
-  if (MODE_WITHIN_RANGE(m_matrixMode))
+  if (MODE_WITHIN_RANGE(m_matrixMode) && (m_matrices[m_matrixMode].size() > 1))
   {
-    if (m_matrices[m_matrixMode].size() > 1)
-      m_matrices[m_matrixMode].pop_back();
+    m_matrices[m_matrixMode].pop_back();
     m_pMatrix = m_matrices[m_matrixMode].back();
   }
 }

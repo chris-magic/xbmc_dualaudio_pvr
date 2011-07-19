@@ -53,8 +53,7 @@ CGUIDialogNetworkSetup::~CGUIDialogNetworkSetup()
 
 bool CGUIDialogNetworkSetup::OnAction(const CAction &action)
 {
-  if (action.GetID() == ACTION_PREVIOUS_MENU ||
-      action.GetID() == ACTION_NAV_BACK)
+  if (action.GetID() == ACTION_PREVIOUS_MENU)
     m_confirmed = false;
   return CGUIDialog::OnAction(action);
 }
@@ -142,12 +141,6 @@ void CGUIDialogNetworkSetup::OnInitWindow()
   pSpin->AddLabel(g_localizeStrings.Get(20174), NET_PROTOCOL_DAAP);
   pSpin->AddLabel(g_localizeStrings.Get(20175), NET_PROTOCOL_UPNP);
   pSpin->AddLabel(g_localizeStrings.Get(20304), NET_PROTOCOL_RSS);
-#ifdef HAS_FILESYSTEM_NFS
-  pSpin->AddLabel(g_localizeStrings.Get(20259), NET_PROTOCOL_NFS);
-#endif
-#ifdef HAS_FILESYSTEM_SFTP
-  pSpin->AddLabel(g_localizeStrings.Get(20260), NET_PROTOCOL_SFTP);
-#endif
 
   pSpin->SetValue(m_protocol);
   OnProtocolChange();
@@ -212,10 +205,6 @@ void CGUIDialogNetworkSetup::OnProtocolChange()
     m_port = "2004";
   else if (m_protocol == NET_PROTOCOL_MYTH)
     m_port = "6543";
-  else if (m_protocol == NET_PROTOCOL_NFS)
-    m_port = "2049";
-  else if (m_protocol == NET_PROTOCOL_SFTP)
-    m_port = "22";
 
   UpdateButtons();
 }
@@ -249,9 +238,7 @@ void CGUIDialogNetworkSetup::UpdateButtons()
       m_protocol == NET_PROTOCOL_HTTPS ||
       m_protocol == NET_PROTOCOL_RSS ||
       m_protocol == NET_PROTOCOL_DAV ||
-      m_protocol == NET_PROTOCOL_DAVS||
-      m_protocol == NET_PROTOCOL_SFTP||
-      m_protocol == NET_PROTOCOL_NFS)
+      m_protocol == NET_PROTOCOL_DAVS)
   {
     SET_CONTROL_LABEL(CONTROL_REMOTE_PATH, 1011);  // Remote Path
   }
@@ -265,8 +252,7 @@ void CGUIDialogNetworkSetup::UpdateButtons()
   SET_CONTROL_LABEL2(CONTROL_USERNAME, m_username);
   CONTROL_ENABLE_ON_CONDITION(CONTROL_USERNAME, m_protocol != NET_PROTOCOL_DAAP &&
                                                 m_protocol != NET_PROTOCOL_VTP &&
-                                                m_protocol != NET_PROTOCOL_UPNP &&
-                                                m_protocol != NET_PROTOCOL_NFS);
+                                                m_protocol != NET_PROTOCOL_UPNP);
 
   SendMessage(GUI_MSG_SET_TYPE, CONTROL_USERNAME, CGUIEditControl::INPUT_TYPE_TEXT, 1019);
 
@@ -282,9 +268,7 @@ void CGUIDialogNetworkSetup::UpdateButtons()
                                                    m_protocol == NET_PROTOCOL_VTP ||
                                                    m_protocol == NET_PROTOCOL_MYTH ||
                                                    m_protocol == NET_PROTOCOL_RSS ||
-                                                   m_protocol == NET_PROTOCOL_DAAP ||
-                                                   m_protocol == NET_PROTOCOL_SFTP ||
-                                                   m_protocol == NET_PROTOCOL_NFS);
+                                                   m_protocol == NET_PROTOCOL_DAAP);
 
   SendMessage(GUI_MSG_SET_TYPE, CONTROL_PORT_NUMBER, CGUIEditControl::INPUT_TYPE_NUMBER, 1018);
 
@@ -292,13 +276,12 @@ void CGUIDialogNetworkSetup::UpdateButtons()
   SET_CONTROL_LABEL2(CONTROL_PASSWORD, m_password);
   CONTROL_ENABLE_ON_CONDITION(CONTROL_PASSWORD, m_protocol != NET_PROTOCOL_DAAP &&
                                                 m_protocol != NET_PROTOCOL_VTP &&
-                                                m_protocol != NET_PROTOCOL_UPNP &&
-                                                m_protocol != NET_PROTOCOL_NFS);
+                                                m_protocol != NET_PROTOCOL_UPNP);
 
   SendMessage(GUI_MSG_SET_TYPE, CONTROL_PASSWORD, CGUIEditControl::INPUT_TYPE_PASSWORD, 12326);
 
   // TODO: FIX BETTER DAAP SUPPORT
-  // server browse should be disabled if we are in DAAP, FTP, HTTP, HTTPS, RSS, HTSP, VTP, TUXBOX, DAV, NFS or DAVS
+  // server browse should be disabled if we are in DAAP, FTP, HTTP, HTTPS, RSS, HTSP, VTP, TUXBOX, DAV or DAVS
   CONTROL_ENABLE_ON_CONDITION(CONTROL_SERVER_BROWSE, !m_server.IsEmpty() || !(m_protocol == NET_PROTOCOL_FTP ||
                                                                               m_protocol == NET_PROTOCOL_HTTP ||
                                                                               m_protocol == NET_PROTOCOL_HTTPS ||
@@ -309,9 +292,7 @@ void CGUIDialogNetworkSetup::UpdateButtons()
                                                                               m_protocol == NET_PROTOCOL_HTSP ||
                                                                               m_protocol == NET_PROTOCOL_VTP ||
                                                                               m_protocol == NET_PROTOCOL_MYTH ||
-                                                                              m_protocol == NET_PROTOCOL_TUXBOX||
-                                                                              m_protocol == NET_PROTOCOL_SFTP ||
-                                                                              m_protocol == NET_PROTOCOL_NFS));
+                                                                              m_protocol == NET_PROTOCOL_TUXBOX));
 }
 
 CStdString CGUIDialogNetworkSetup::ConstructPath() const
@@ -343,11 +324,6 @@ CStdString CGUIDialogNetworkSetup::ConstructPath() const
     url.SetProtocol("vtp");
   else if (m_protocol == NET_PROTOCOL_MYTH)
     url.SetProtocol("myth");
-  else if (m_protocol == NET_PROTOCOL_NFS)
-    url.SetProtocol("nfs");
-  else if (m_protocol == NET_PROTOCOL_SFTP)
-    url.SetProtocol("sftp");
-    
   if (!m_username.IsEmpty())
   {
     url.SetUserName(m_username);
@@ -366,9 +342,7 @@ CStdString CGUIDialogNetworkSetup::ConstructPath() const
        (m_protocol == NET_PROTOCOL_HTSP) ||
        (m_protocol == NET_PROTOCOL_VTP) ||
        (m_protocol == NET_PROTOCOL_MYTH) ||
-       (m_protocol == NET_PROTOCOL_TUXBOX) ||
-       (m_protocol == NET_PROTOCOL_SFTP) ||
-       (m_protocol == NET_PROTOCOL_NFS))
+       (m_protocol == NET_PROTOCOL_TUXBOX))
       && !m_port.IsEmpty() && atoi(m_port.c_str()) > 0)
   {
     url.SetPort(atoi(m_port));
@@ -408,10 +382,6 @@ void CGUIDialogNetworkSetup::SetPath(const CStdString &path)
     m_protocol = NET_PROTOCOL_MYTH;
   else if (protocol == "rss")
     m_protocol = NET_PROTOCOL_RSS;
-  else if (protocol == "nfs")
-    m_protocol = NET_PROTOCOL_NFS;
-  else if (protocol == "sftp" || protocol == "ssh")
-    m_protocol = NET_PROTOCOL_SFTP;
   else
     m_protocol = NET_PROTOCOL_SMB;  // default to smb
   m_username = url.GetUserName();

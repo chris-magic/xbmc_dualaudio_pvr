@@ -22,7 +22,6 @@
 #include "GUIPythonWindowXMLDialog.h"
 #include "guilib/GUIWindowManager.h"
 #include "Application.h"
-#include "threads/SingleLock.h"
 
 CGUIPythonWindowXMLDialog::CGUIPythonWindowXMLDialog(int id, CStdString strXML, CStdString strFallBackPath)
 : CGUIPythonWindowXML(id,strXML,strFallBackPath)
@@ -49,10 +48,11 @@ bool CGUIPythonWindowXMLDialog::OnMessage(CGUIMessage &message)
 
 void CGUIPythonWindowXMLDialog::Show(bool show /* = true */)
 {
-  CSingleExit leaveIt(g_graphicsContext);
+  int count = ExitCriticalSection(g_graphicsContext);
   ThreadMessage tMsg = {TMSG_GUI_PYTHON_DIALOG, 1, show ? 1 : 0};
   tMsg.lpVoid = this;
   g_application.getApplicationMessenger().SendMessage(tMsg, true);
+  RestoreCriticalSection(g_graphicsContext, count);
 }
 
 void CGUIPythonWindowXMLDialog::Show_Internal(bool show /* = true */)

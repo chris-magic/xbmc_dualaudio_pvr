@@ -25,7 +25,6 @@
 #include "utils/StdString.h"
 #include "guilib/Key.h"
 #include "threads/Thread.h"
-#include "threads/Event.h"
 
 #include <queue>
 
@@ -55,8 +54,6 @@ class CGUIDialog;
 #define TMSG_PLAYLISTPLAYER_PLAY_SONG_ID 217
 #define TMSG_PLAYLISTPLAYER_INSERT 218
 #define TMSG_PLAYLISTPLAYER_REMOVE 219
-#define TMSG_PLAYLISTPLAYER_SWAP 223
-#define TMSG_PLAYLISTPLAYER_REPEAT 224
 
 #define TMSG_PICTURE_SHOW         220
 #define TMSG_PICTURE_SLIDESHOW    221
@@ -65,6 +62,7 @@ class CGUIDialog;
 #define TMSG_SHUTDOWN             300
 #define TMSG_POWERDOWN            301
 #define TMSG_QUIT                 302
+#define TMSG_DASHBOARD            TMSG_QUIT
 #define TMSG_HIBERNATE            303
 #define TMSG_SUSPEND              304
 #define TMSG_RESTART              305
@@ -86,14 +84,11 @@ class CGUIDialog;
 #define TMSG_GUI_ACTION               607
 #define TMSG_GUI_INFOLABEL            608
 #define TMSG_GUI_INFOBOOL             609
-#define TMSG_GUI_ADDON_DIALOG         610
 
 #define TMSG_OPTICAL_MOUNT        700
 #define TMSG_OPTICAL_UNMOUNT      701
 
 #define TMSG_CALLBACK             800
-
-#define TMSG_VOLUME_SHOW          900
 
 typedef struct
 {
@@ -102,7 +97,7 @@ typedef struct
   DWORD dwParam2;
   CStdString strParam;
   std::vector<CStdString> params;
-  boost::shared_ptr<CEvent> waitEvent;
+  HANDLE hWaitEvent;
   LPVOID lpVoid;
 }
 ThreadMessage;
@@ -157,8 +152,6 @@ public:
   void PlayListPlayerInsert(int playlist, const CFileItem &item, int position); 
   void PlayListPlayerInsert(int playlist, const CFileItemList &list, int position);
   void PlayListPlayerRemove(int playlist, int position);
-  void PlayListPlayerSwap(int playlist, int indexItem1, int indexItem2);
-  void PlayListPlayerRepeat(int playlist, int repeatState);
 
   void PlayFile(const CFileItem &item, bool bRestart = false); // thread safe version of g_application.PlayFile()
   void PictureShow(std::string filename);
@@ -169,6 +162,7 @@ public:
   void Hibernate();
   void Suspend();
   void Restart();
+  void RebootToDashBoard();
   void RestartApp();
   void Reset();
   void SwitchToFullscreen(); //
@@ -193,8 +187,6 @@ public:
 
   void OpticalMount(CStdString device, bool bautorun=false);
   void OpticalUnMount(CStdString device);
-
-  void ShowVolumeBar(bool up);
 
 private:
   void ProcessMessage(ThreadMessage *pMsg);

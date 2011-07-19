@@ -155,6 +155,7 @@ bool CGUIDialogKaraokeSongSelector::OnAction(const CAction & action)
 
     case ACTION_DELETE_ITEM:
     case ACTION_BACKSPACE:
+    case ACTION_PARENT_DIR:
       OnBackspace();
       break;
   }

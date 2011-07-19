@@ -25,7 +25,6 @@
 #include <string>
 #include <list>
 #include "threads/CriticalSection.h"
-#include "threads/Event.h"
 
 struct DVDMessageListItem
 {
@@ -122,7 +121,7 @@ public:
 
 private:
 
-  CEvent m_hEvent;
+  HANDLE m_hEvent;
   mutable CCriticalSection m_section;
 
   bool m_bAbortRequest;

@@ -52,7 +52,6 @@ public:
   virtual ~CGUIResizeControl(void);
   virtual CGUIResizeControl *Clone() const { return new CGUIResizeControl(*this); };
 
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
   virtual bool OnAction(const CAction &action);
   virtual void OnUp();
@@ -68,8 +67,8 @@ public:
 
 protected:
   virtual EVENT_RESULT OnMouseEvent(const CPoint &point, const CMouseEvent &event);
-  virtual bool UpdateColors();
-  bool SetAlpha(unsigned char alpha);
+  virtual void UpdateColors();
+  void SetAlpha(unsigned char alpha);
   void UpdateSpeed(int nDirection);
   void Resize(float x, float y);
   CGUITexture m_imgFocus;

@@ -22,7 +22,6 @@
  */
 
 #include "cores/VideoRenderers/OverlayRenderer.h"
-#include "threads/Atomics.h"
 #include <assert.h>
 #include <vector>
 
@@ -79,7 +78,7 @@ public:
    */
   CDVDOverlay* Acquire()
   {
-    AtomicIncrement(&m_references);
+    InterlockedIncrement(&m_references);
     return this;
   }
 
@@ -88,7 +87,7 @@ public:
    */
   long Release()
   {
-    long count = AtomicDecrement(&m_references);
+    long count = InterlockedDecrement(&m_references);
     if (count == 0) delete this;
     return count;
   }

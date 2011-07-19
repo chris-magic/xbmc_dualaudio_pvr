@@ -22,6 +22,7 @@
 #include "XHandle.h"
 #include "XThreadUtils.h"
 #include "utils/log.h"
+#include "threads/XBMC_mutex.h"
 
 int CXHandle::m_objectTracker[10] = {0};
 
@@ -45,6 +46,8 @@ CXHandle::CXHandle(const CXHandle &src)
   CLog::Log(LOGWARNING,"%s, copy handle.", __FUNCTION__);
 
   Init();
+  if (src.m_pSem)
+    m_pSem = new CSemaphore(*src.m_pSem);
 
   if (m_threadValid)
   {
@@ -52,7 +55,7 @@ CXHandle::CXHandle(const CXHandle &src)
   }
 
   if (src.m_hMutex)
-    m_hMutex = new CCriticalSection();
+    m_hMutex = SDL_CreateMutex();
 
   fd = src.fd;
   m_bManualEvent = src.m_bManualEvent;
@@ -80,16 +83,18 @@ CXHandle::~CXHandle()
     assert(false);
   }
   
+  delete m_pSem;
+
   if (m_hMutex) {
-    delete m_hMutex;
+    SDL_DestroyMutex(m_hMutex);
   }
 
   if (m_internalLock) {
-    delete m_internalLock;
+    SDL_DestroyMutex(m_internalLock);
   }
 
   if (m_hCond) {
-    delete m_hCond;
+    SDL_DestroyCond(m_hCond);
   }
 
   if (m_threadValid) {
@@ -105,6 +110,7 @@ CXHandle::~CXHandle()
 void CXHandle::Init()
 {
   fd=0;
+  m_pSem=NULL;
   m_hMutex=NULL;
   m_threadValid=false;
   m_hCond=NULL;
@@ -116,7 +122,7 @@ void CXHandle::Init()
   m_nFindFileIterator=0 ;
   m_nRefCount=1;
   m_tmCreation = time(NULL);
-  m_internalLock = new CCriticalSection();
+  m_internalLock = SDL_CreateMutex();
 #ifdef __APPLE__
   m_machThreadPort = 0;
 #endif
@@ -142,11 +148,10 @@ bool CloseHandle(HANDLE hObject) {
     return true;
 
   bool bDelete = false;
-  {
-    CSingleLock lock((*hObject->m_internalLock));
-    if (--hObject->m_nRefCount == 0)
-      bDelete = true;
-  }
+  SDL_LockMutex(hObject->m_internalLock);
+  if (--hObject->m_nRefCount == 0)
+    bDelete = true;
+  SDL_UnlockMutex(hObject->m_internalLock);
 
   if (bDelete)
     delete hObject;
@@ -176,10 +181,9 @@ BOOL WINAPI DuplicateHandle(
   if (hSourceHandle == (HANDLE)-1)
     return FALSE;
 
-  {
-    CSingleLock lock(*(hSourceHandle->m_internalLock));
-    hSourceHandle->m_nRefCount++;
-  }
+  SDL_LockMutex(hSourceHandle->m_internalLock);
+  hSourceHandle->m_nRefCount++;
+  SDL_UnlockMutex(hSourceHandle->m_internalLock);
 
   if(lpTargetHandle)
     *lpTargetHandle = hSourceHandle;

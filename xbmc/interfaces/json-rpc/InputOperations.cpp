@@ -24,72 +24,44 @@
 
 using namespace JSONRPC;
 
-//TODO the breakage of the screensaver should be refactored
-//to one central super duper place for getting rid of
-//1 million dupes
-bool CInputOperations::handleScreenSaver()
-{
-  bool screenSaverBroken = false; //true if screensaver was active and we did reset him
-
-  g_application.ResetScreenSaver();
-  
-  if(g_application.IsInScreenSaver())
-  {
-    g_application.WakeUpScreenSaverAndDPMS();
-    screenSaverBroken = true;
-  }
-  return screenSaverBroken;
-}
-
-JSON_STATUS CInputOperations::sendAction(int actionID)
-{
-  if(!handleScreenSaver())
-  {
-    g_application.getApplicationMessenger().SendAction(CAction(actionID), WINDOW_INVALID, false);
-  }
-  return ACK;
-}
-
-JSON_STATUS CInputOperations::activateWindow(int windowID)
-{
-  if(!handleScreenSaver())
-  {
-    g_application.getApplicationMessenger().ActivateWindow(windowID, std::vector<CStdString>(), false);
-  }
-  return ACK;
-}
-
 JSON_STATUS CInputOperations::Left(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
-  return sendAction(ACTION_MOVE_LEFT);
+  g_application.getApplicationMessenger().SendAction(CAction(ACTION_MOVE_LEFT), WINDOW_INVALID, false);
+  return ACK;
 }
 
 JSON_STATUS CInputOperations::Right(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
-  return sendAction(ACTION_MOVE_RIGHT);  
+  g_application.getApplicationMessenger().SendAction(CAction(ACTION_MOVE_RIGHT), WINDOW_INVALID, false);
+  return ACK;
 }
 
 JSON_STATUS CInputOperations::Down(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
-  return sendAction(ACTION_MOVE_DOWN);  
+  g_application.getApplicationMessenger().SendAction(CAction(ACTION_MOVE_DOWN), WINDOW_INVALID, false);
+  return ACK;
 }
 
 JSON_STATUS CInputOperations::Up(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
-  return sendAction(ACTION_MOVE_UP);  
+  g_application.getApplicationMessenger().SendAction(CAction(ACTION_MOVE_UP), WINDOW_INVALID, false);
+  return ACK;
 }
 
 JSON_STATUS CInputOperations::Select(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
-  return sendAction(ACTION_SELECT_ITEM);  
+  g_application.getApplicationMessenger().SendAction(CAction(ACTION_SELECT_ITEM), WINDOW_INVALID, false);
+  return ACK;
 }
 
 JSON_STATUS CInputOperations::Back(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
-  return sendAction(ACTION_NAV_BACK);  
+  g_application.getApplicationMessenger().SendAction(CAction(ACTION_PARENT_DIR), WINDOW_INVALID, false);
+  return ACK;
 }
 
 JSON_STATUS CInputOperations::Home(const CStdString &method, ITransportLayer *transport, IClient *client, const CVariant &parameterObject, CVariant &result)
 {
-  return activateWindow(WINDOW_HOME);
+  g_application.getApplicationMessenger().ActivateWindow(WINDOW_HOME, std::vector<CStdString>(), false);
+  return ACK;
 }

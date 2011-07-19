@@ -37,11 +37,9 @@
 #include "settings/Settings.h"
 #include "settings/GUISettings.h"
 #include "guilib/LocalizeStrings.h"
-#include "pvr/PVRManager.h"
 
 using namespace std;
 using namespace XFILE;
-using namespace PVR;
 
 #ifdef HAS_VIDEO_PLAYBACK
 extern void xbox_audio_switch_channel(int iAudioStream, bool bAudioOnAllSpeakers); //lowlevel audio
@@ -189,12 +187,6 @@ void CGUIDialogAudioSubtitleSettings::AddSubtitleStreams(unsigned int id)
     g_application.m_pPlayer->GetSubtitleName(i, strName);
     if (strName.length() == 0)
       strName = "Unnamed";
-
-    CStdString strLanguage;
-    g_application.m_pPlayer->GetSubtitleLanguage(i, strLanguage);
-
-    if (strName != strLanguage)
-      strName.Format("%s [%s]", strName.c_str(), strLanguage.c_str());
 
     strItem.Format("%s (%i/%i)", strName.c_str(), i + 1, (int)setting.max + 1);
 
@@ -349,9 +341,6 @@ void CGUIDialogAudioSubtitleSettings::OnSettingChanged(SettingInfo &setting)
       g_settings.Save();
     }
   }
-
-  if (g_PVRManager.IsPlayingRadio() || g_PVRManager.IsPlayingTV())
-    g_PVRManager.TriggerSaveChannelSettings();
 }
 
 void CGUIDialogAudioSubtitleSettings::FrameMove()

@@ -287,14 +287,7 @@ void CGUIWindow::CenterWindow()
   m_posY = (m_coordsRes.iHeight - GetHeight()) / 2;
 }
 
-void CGUIWindow::DoProcess(unsigned int currentTime, CDirtyRegionList &dirtyregions)
-{
-  g_graphicsContext.SetRenderingResolution(m_coordsRes, m_needsScaling);
-  g_graphicsContext.ResetWindowTransform();
-  CGUIControlGroup::DoProcess(currentTime, dirtyregions);
-}
-
-void CGUIWindow::DoRender()
+void CGUIWindow::Render()
 {
   // If we're rendering from a different thread, then we should wait for the main
   // app thread to finish AllocResources(), as dynamic resources (images in particular)
@@ -304,8 +297,15 @@ void CGUIWindow::DoRender()
 
   g_graphicsContext.SetRenderingResolution(m_coordsRes, m_needsScaling);
 
-  g_graphicsContext.ResetWindowTransform();
-  CGUIControlGroup::DoRender();
+  m_renderTime = CTimeUtils::GetFrameTime();
+  // render our window animation - returns false if it needs to stop rendering
+  if (!RenderAnimation(m_renderTime))
+    return;
+
+  if (m_hasCamera)
+    g_graphicsContext.SetCameraPosition(m_camera);
+
+  CGUIControlGroup::Render();
 
   if (CGUIControlProfiler::IsRunning()) CGUIControlProfiler::Instance().EndFrame();
 }
@@ -322,24 +322,12 @@ bool CGUIWindow::OnAction(const CAction &action)
 
   CGUIControl *focusedControl = GetFocusedControl();
   if (focusedControl)
-  {
-    if (focusedControl->OnAction(action))
-      return true;
-  }
-  else
-  {
-    // no control has focus?
-    // set focus to the default control then
-    CGUIMessage msg(GUI_MSG_SETFOCUS, GetID(), m_defaultControl);
-    OnMessage(msg);
-  }
+    return focusedControl->OnAction(action);
 
-  // default implementations
-  if (action.GetID() == ACTION_NAV_BACK || action.GetID() == ACTION_PREVIOUS_MENU)
-  {
-    g_windowManager.PreviousWindow();
-    return true;
-  }
+  // no control has focus?
+  // set focus to the default control then
+  CGUIMessage msg(GUI_MSG_SETFOCUS, GetID(), m_defaultControl);
+  OnMessage(msg);
   return false;
 }
 
@@ -441,11 +429,7 @@ void CGUIWindow::OnDeinitWindow(int nextWindowID)
       QueueAnimation(ANIM_TYPE_WINDOW_CLOSE);
       while (IsAnimating(ANIM_TYPE_WINDOW_CLOSE))
       {
-        // TODO This shouldn't be handled like this
-        // The processing should be done from WindowManager and deinit
-        // should probably be called from there.
-        g_windowManager.Process(CTimeUtils::GetFrameTime());
-        g_windowManager.ProcessRenderLoop(true);
+        g_windowManager.Process(true);
       }
     }
   }
@@ -566,8 +550,7 @@ bool CGUIWindow::OnMessage(CGUIMessage& message)
       {
         if (message.GetParam1() == GUI_MSG_PAGE_CHANGE ||
             message.GetParam1() == GUI_MSG_REFRESH_THUMBS ||
-            message.GetParam1() == GUI_MSG_REFRESH_LIST ||
-            message.GetParam1() == GUI_MSG_WINDOW_RESIZE)
+            message.GetParam1() == GUI_MSG_REFRESH_LIST)
         { // alter the message accordingly, and send to all controls
           for (iControls it = m_children.begin(); it != m_children.end(); ++it)
           {
@@ -575,6 +558,12 @@ bool CGUIWindow::OnMessage(CGUIMessage& message)
             CGUIMessage msg(message.GetParam1(), message.GetControlId(), control->GetID(), message.GetParam2());
             control->OnMessage(msg);
           }
+        }
+        if (message.GetParam1() == GUI_MSG_WINDOW_RESIZE)
+        {
+          // invalidate controls to get them to recalculate sizing information
+          SetInvalid();
+          return true;
         }
       }
     }
@@ -678,15 +667,14 @@ bool CGUIWindow::IsAnimating(ANIMATION_TYPE animType)
   return CGUIControlGroup::IsAnimating(animType);
 }
 
-bool CGUIWindow::Animate(unsigned int currentTime)
+bool CGUIWindow::RenderAnimation(unsigned int time)
 {
+  g_graphicsContext.ResetWindowTransform();
   if (m_animationsEnabled)
-    return CGUIControlGroup::Animate(currentTime);
+    CGUIControlGroup::Animate(time);
   else
-  {
     m_transform.Reset();
-    return false;
-  }
+  return true;
 }
 
 void CGUIWindow::DisableAnimations()

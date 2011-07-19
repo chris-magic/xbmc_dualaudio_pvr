@@ -82,21 +82,17 @@ const CGUIInfoColor &CGUIInfoColor::operator=(const CGUIInfoColor &color)
   return *this;
 }
 
-bool CGUIInfoColor::Update()
+void CGUIInfoColor::Update()
 {
   if (!m_info)
-    return false; // no infolabel
+    return; // no infolabel
 
   // Expand the infolabel, and then convert it to a color
   CStdString infoLabel(g_infoManager.GetLabel(m_info));
-  color_t color = !infoLabel.IsEmpty() ? g_colorManager.GetColor(infoLabel.c_str()) : 0;
-  if (m_color != color)
-  {
-    m_color = color;
-    return true;
-  }
+  if (!infoLabel.IsEmpty())
+    m_color = g_colorManager.GetColor(infoLabel.c_str());
   else
-    return false;
+    m_color = 0;
 }
 
 void CGUIInfoColor::Parse(const CStdString &label)

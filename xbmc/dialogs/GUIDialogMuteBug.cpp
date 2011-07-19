@@ -21,9 +21,10 @@
 
 #include "GUIDialogMuteBug.h"
 #include "GUIUserMessages.h"
-#include "settings/Settings.h"
 
 // the MuteBug is a true modeless dialog
+
+#define MUTEBUG_IMAGE     901
 
 CGUIDialogMuteBug::CGUIDialogMuteBug(void)
     : CGUIDialog(WINDOW_DIALOG_MUTE_BUG, "DialogMuteBug.xml")
@@ -34,10 +35,25 @@ CGUIDialogMuteBug::CGUIDialogMuteBug(void)
 CGUIDialogMuteBug::~CGUIDialogMuteBug(void)
 {}
 
-void CGUIDialogMuteBug::UpdateVisibility()
+bool CGUIDialogMuteBug::OnMessage(CGUIMessage& message)
 {
-  if (g_settings.m_bMute)
-    Show();
-  else
-    Close();
+  switch ( message.GetMessage() )
+  {
+  case GUI_MSG_MUTE_OFF:
+    {
+      Close();
+      return true;
+    }
+    break;
+
+  case GUI_MSG_MUTE_ON:
+    {
+      // this is handled in g_application
+      // non-active modeless window can not get messages
+      //Show();
+      return true;
+    }
+    break;
+  }
+  return CGUIDialog::OnMessage(message);
 }

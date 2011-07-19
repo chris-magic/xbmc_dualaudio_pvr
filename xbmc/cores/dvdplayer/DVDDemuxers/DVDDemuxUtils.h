@@ -21,12 +21,13 @@
  *
  */
 
-#include "DVDDemuxPacket.h"
+#include "DVDDemux.h"
 
 class CDVDDemuxUtils
 {
 public:
   static void FreeDemuxPacket(DemuxPacket* pPacket);
   static DemuxPacket* AllocateDemuxPacket(int iDataSize = 0);
+  static DemuxPacket* DuplicateDemuxPacket(DemuxPacket* pPacket);
 };
 

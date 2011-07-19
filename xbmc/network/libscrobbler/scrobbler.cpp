@@ -54,10 +54,14 @@ CScrobbler::CScrobbler(const CStdString &strHandshakeURL, const CStdString &strL
   m_strHandshakeURL = strHandshakeURL;
   m_strLogPrefix    = strLogPrefix;
   ResetState();
+
+  if (!(m_hEvent = CreateEvent(NULL, false, false, NULL)))
+    throw EOutOfMemory();
 }
 
 CScrobbler::~CScrobbler()
 {
+  CloseHandle(m_hEvent);
 }
 
 void CScrobbler::Init()
@@ -137,7 +141,7 @@ void CScrobbler::UpdateStatus()
       CSingleLock lock(m_actionLock);
       m_action = SCROBBLER_ACTION_NOWPLAYING;
     }
-    m_hEvent.Set();
+    SetEvent(m_hEvent);
     return;
   }
 
@@ -165,7 +169,7 @@ void CScrobbler::SubmitQueue()
       CSingleLock lock(m_actionLock);
       m_action = SCROBBLER_ACTION_SUBMIT;
     }
-    m_hEvent.Set();
+    SetEvent(m_hEvent);
   }
 }
 
@@ -638,8 +642,8 @@ void CScrobbler::Process()
   }
   while (!m_bStop)
   {
-    AbortableWait(m_hEvent);
-    if (m_bStop)
+    WaitForSingleObject(m_hEvent, INFINITE);
+	if (m_bStop)
       break;
     
     if (m_strSessionID.IsEmpty())

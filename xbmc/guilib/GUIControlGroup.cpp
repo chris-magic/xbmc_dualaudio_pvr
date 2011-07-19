@@ -29,6 +29,7 @@ CGUIControlGroup::CGUIControlGroup()
   m_defaultControl = 0;
   m_defaultAlways = false;
   m_focusedControl = 0;
+  m_renderTime = 0;
   m_renderFocusedLast = false;
   ControlType = GUICONTROL_GROUP;
 }
@@ -39,6 +40,7 @@ CGUIControlGroup::CGUIControlGroup(int parentID, int controlID, float posX, floa
   m_defaultControl = 0;
   m_defaultAlways = false;
   m_focusedControl = 0;
+  m_renderTime = 0;
   m_renderFocusedLast = false;
   ControlType = GUICONTROL_GROUP;
 }
@@ -56,6 +58,7 @@ CGUIControlGroup::CGUIControlGroup(const CGUIControlGroup &from)
 
   // defaults
   m_focusedControl = 0;
+  m_renderTime = 0;
   ControlType = GUICONTROL_GROUP;
 }
 
@@ -94,27 +97,6 @@ void CGUIControlGroup::DynamicResourceAlloc(bool bOnOff)
   }
 }
 
-void CGUIControlGroup::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
-{
-  CPoint pos(GetPosition());
-  g_graphicsContext.SetOrigin(pos.x, pos.y);
-
-  CRect rect;
-  for (iControls it = m_children.begin(); it != m_children.end(); ++it)
-  {
-    CGUIControl *control = *it;
-    control->UpdateVisibility();
-    unsigned int oldDirty = dirtyregions.size();
-    control->DoProcess(currentTime, dirtyregions);
-    if (control->IsVisible() || (oldDirty != dirtyregions.size())) // visible or dirty (was visible?)
-      rect.Union(control->GetRenderRegion());
-  }
-
-  g_graphicsContext.RestoreOrigin();
-  CGUIControl::Process(currentTime, dirtyregions);
-  m_renderRegion = rect;
-}
-
 void CGUIControlGroup::Render()
 {
   CPoint pos(GetPosition());
@@ -123,13 +105,16 @@ void CGUIControlGroup::Render()
   for (iControls it = m_children.begin(); it != m_children.end(); ++it)
   {
     CGUIControl *control = *it;
+    GUIPROFILER_VISIBILITY_BEGIN(control);
+    control->UpdateVisibility();
+    GUIPROFILER_VISIBILITY_END(control);
     if (m_renderFocusedLast && control->HasFocus())
       focusedControl = control;
     else
-      control->DoRender();
+      control->DoRender(m_renderTime);
   }
   if (focusedControl)
-    focusedControl->DoRender();
+    focusedControl->DoRender(m_renderTime);
   CGUIControl::Render();
   g_graphicsContext.RestoreOrigin();
 }
@@ -232,7 +217,6 @@ bool CGUIControlGroup::OnMessage(CGUIMessage& message)
   case GUI_MSG_PAGE_CHANGE:
   case GUI_MSG_REFRESH_THUMBS:
   case GUI_MSG_REFRESH_LIST:
-  case GUI_MSG_WINDOW_RESIZE:
     { // send to all child controls (make sure the target is the control id)
       for (iControls it = m_children.begin(); it != m_children.end(); ++it)
       {
@@ -297,6 +281,12 @@ bool CGUIControlGroup::CanFocus() const
       return true;
   }
   return false;
+}
+
+void CGUIControlGroup::DoRender(unsigned int currentTime)
+{
+  m_renderTime = currentTime;
+  CGUIControl::DoRender(currentTime);
 }
 
 void CGUIControlGroup::SetInitialVisibility()
@@ -509,7 +499,6 @@ void CGUIControlGroup::AddControl(CGUIControl *control, int position /* = -1*/)
   control->SetParentControl(this);
   control->SetPushUpdates(m_pushedUpdates);
   AddLookup(control);
-  SetInvalid();
 }
 
 void CGUIControlGroup::AddLookup(CGUIControl *control)
@@ -610,7 +599,6 @@ bool CGUIControlGroup::RemoveControl(const CGUIControl *control)
     {
       m_children.erase(it);
       RemoveLookup(child);
-      SetInvalid();
       return true;
     }
   }
@@ -633,7 +621,6 @@ void CGUIControlGroup::ClearAll()
   }
   m_children.clear();
   m_lookup.clear();
-  SetInvalid();
 }
 
 void CGUIControlGroup::GetContainers(vector<CGUIControl *> &containers) const
@@ -645,6 +632,12 @@ void CGUIControlGroup::GetContainers(vector<CGUIControl *> &containers) const
     else if ((*it)->IsGroup())
       ((CGUIControlGroup *)(*it))->GetContainers(containers);
   }
+}
+
+void CGUIControlGroup::SetInvalid()
+{
+  for (iControls it = m_children.begin(); it != m_children.end(); ++it)
+    (*it)->SetInvalid();
 }
 
 #ifdef _DEBUG

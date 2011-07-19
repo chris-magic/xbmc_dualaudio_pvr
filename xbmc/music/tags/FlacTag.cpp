@@ -26,7 +26,6 @@
 #include "filesystem/File.h"
 #include "utils/log.h"
 #include "utils/EndianSwap.h"
-#include "ThumbnailCache.h"
 
 
 #define BYTES_TO_CHECK_FOR_BAD_TAGS 16384
@@ -114,9 +113,9 @@ bool CFlacTag::Read(const CStdString& strFile)
 
   CStdString strCoverArt;
   if (!m_musicInfoTag.GetAlbum().IsEmpty() && (!m_musicInfoTag.GetAlbumArtist().IsEmpty() || !m_musicInfoTag.GetArtist().IsEmpty()))
-    strCoverArt = CThumbnailCache::GetAlbumThumb(&m_musicInfoTag);
+    strCoverArt = CUtil::GetCachedAlbumThumb(m_musicInfoTag.GetAlbum(), m_musicInfoTag.GetAlbumArtist().IsEmpty() ? m_musicInfoTag.GetArtist() : m_musicInfoTag.GetAlbumArtist());
   else
-    strCoverArt = CThumbnailCache::GetMusicThumb(m_musicInfoTag.GetURL());
+    strCoverArt = CUtil::GetCachedMusicThumb(m_musicInfoTag.GetURL());
 
   if (cover && !CUtil::ThumbExists(strCoverArt))
   {

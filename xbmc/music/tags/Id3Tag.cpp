@@ -27,7 +27,6 @@
 #include "guilib/LocalizeStrings.h"
 #include "utils/CharsetConverter.h"
 #include "utils/log.h"
-#include "ThumbnailCache.h"
 
 #include <set>
 
@@ -168,9 +167,9 @@ bool CID3Tag::Parse()
   // other non-tagged files don't get this album image
   CStdString strCoverArt;
   if (!tag.GetAlbum().IsEmpty() && (!tag.GetAlbumArtist().IsEmpty() || !tag.GetArtist().IsEmpty()))
-    strCoverArt = CThumbnailCache::GetAlbumThumb(&tag);
+    strCoverArt = CUtil::GetCachedAlbumThumb(tag.GetAlbum(), tag.GetAlbumArtist().IsEmpty() ? tag.GetArtist() : tag.GetAlbumArtist());
   else
-    strCoverArt = CThumbnailCache::GetMusicThumb(tag.GetURL());
+    strCoverArt = CUtil::GetCachedMusicThumb(tag.GetURL());
   if (bFound && !CUtil::ThumbExists(strCoverArt))
   {
     CStdString strExtension=GetPictureMimeType(pictype);

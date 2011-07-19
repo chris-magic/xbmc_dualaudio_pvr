@@ -20,9 +20,17 @@
  *
  */
 
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 #include <climits>
 #include <cmath>
 #include <vector>
+#include <limits>
 #include <string.h>
 #include <stdint.h>
 
@@ -65,10 +73,6 @@ public:
   static void GetQualifiedFilename(const CStdString &strBasePath, CStdString &strFilename);
   static void RunShortcut(const char* szPath);
   static void GetHomePath(CStdString& strPath, const CStdString& strTarget = "XBMC_HOME");
-  static bool IsPVR(const CStdString& strFile);
-  static bool IsHTSP(const CStdString& strFile);
-  static bool IsLiveTV(const CStdString& strFile);
-  static bool IsTVRecording(const CStdString& strFile);
   static bool ExcludeFileOrFolder(const CStdString& strFileOrFolder, const CStdStringArray& regexps);
   static void GetFileAndProtocol(const CStdString& strURL, CStdString& strDir);
   static int GetDVDIfoTitle(const CStdString& strPathFile);
@@ -139,11 +143,13 @@ public:
   static double AlbumRelevance(const CStdString& strAlbumTemp1, const CStdString& strAlbum1, const CStdString& strArtistTemp1, const CStdString& strArtist1);
   static bool MakeShortenPath(CStdString StrInput, CStdString& StrOutput, int iTextMaxLength);
   static bool SupportsFileOperations(const CStdString& strPath);
+
+  static CStdString GetCachedMusicThumb(const CStdString &path);
+  static CStdString GetCachedAlbumThumb(const CStdString &album, const CStdString &artist);
   static CStdString GetDefaultFolderThumb(const CStdString &folderThumb);
 
 #ifdef UNIT_TESTING
   static bool TestSplitExec();
-  static bool TestGetQualifiedFilename();
 #endif
 
   static void InitRandomSeed();

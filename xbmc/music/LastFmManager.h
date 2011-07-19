@@ -22,7 +22,6 @@
 
 #include "threads/CriticalSection.h"
 #include "threads/Thread.h"
-#include "threads/Event.h"
 #include "PlayListPlayer.h"
 
 namespace PLAYLIST
@@ -100,7 +99,7 @@ private:
   LastFmManagerSong m_CurrentSong;
 
   PLAYLIST::CPlayList* m_RadioTrackQueue;
-  CEvent m_hWorkerEvent;
+  HANDLE m_hWorkerEvent;
   CCriticalSection m_lockCache;
   CCriticalSection m_lockPlaylist;
 

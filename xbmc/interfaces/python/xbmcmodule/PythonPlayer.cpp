@@ -23,7 +23,6 @@
 #include "PythonPlayer.h"
 #include "pythreadstate.h"
 #include "../XBPython.h"
-#include "threads/Atomics.h"
 
 using namespace PYXBMC;
 
@@ -78,13 +77,13 @@ CPythonPlayer::CPythonPlayer()
 
 void CPythonPlayer::Release()
 {
-  if(AtomicDecrement(&m_refs) == 0)
+  if(InterlockedDecrement(&m_refs) == 0)
     delete this;
 }
 
 void CPythonPlayer::Acquire()
 {
-  AtomicIncrement(&m_refs);
+  InterlockedIncrement(&m_refs);
 }
 
 CPythonPlayer::~CPythonPlayer(void)

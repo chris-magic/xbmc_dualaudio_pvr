@@ -33,7 +33,6 @@
 #include "DVDInputStreams/DVDInputStream.h"
 #include "DVDInputStreams/DVDInputStreamNavigator.h"
 #include "DVDInputStreams/DVDInputStreamBluray.h"
-#include "DVDInputStreams/DVDInputStreamPVRManager.h"
 #include "DVDDemuxUtils.h"
 #include "DVDClock.h" // for DVD_TIME_BASE
 #include "utils/Win32Exception.h"
@@ -209,6 +208,7 @@ CDVDDemuxFFmpeg::CDVDDemuxFFmpeg() : CDVDDemux()
   m_pFormatContext = NULL;
   m_pInput = NULL;
   m_ioContext = NULL;
+  InitializeCriticalSection(&m_critSection);
   for (int i = 0; i < MAX_STREAMS; i++) m_streams[i] = NULL;
   m_iCurrentPts = DVD_NOPTS_VALUE;
 }
@@ -216,6 +216,7 @@ CDVDDemuxFFmpeg::CDVDDemuxFFmpeg() : CDVDDemux()
 CDVDDemuxFFmpeg::~CDVDDemuxFFmpeg()
 {
   Dispose();
+  DeleteCriticalSection(&m_critSection);
   ff_flush_avutil_log_buffers();
 }
 
@@ -636,7 +637,7 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
   // on some cases where the received packet is invalid we will need to return an empty packet (0 length) otherwise the main loop (in CDVDPlayer)
   // would consider this the end of stream and stop.
   bool bReturnEmpty = false;
-  { CSingleLock lock(m_critSection); // open lock scope
+  Lock();
   if (m_pFormatContext)
   {
     // assume we are not eof
@@ -732,7 +733,7 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
 
         // we need to get duration slightly different for matroska embedded text subtitels
         if(m_bMatroska && stream->codec->codec_id == CODEC_ID_TEXT && pkt.convergence_duration != 0)
-          pkt.duration = pkt.convergence_duration;
+            pkt.duration = pkt.convergence_duration;
 
         if(m_bAVI && stream->codec && stream->codec->codec_type == AVMEDIA_TYPE_VIDEO)
         {
@@ -760,19 +761,19 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
         // check if stream has passed full duration, needed for live streams
         if(pkt.dts != (int64_t)AV_NOPTS_VALUE)
         {
-          int64_t duration;
-          duration = pkt.dts;
-          if(stream->start_time != (int64_t)AV_NOPTS_VALUE)
-            duration -= stream->start_time;
+            int64_t duration;
+            duration = pkt.dts;
+            if(stream->start_time != (int64_t)AV_NOPTS_VALUE)
+              duration -= stream->start_time;
 
-          if(duration > stream->duration)
-          {
-            stream->duration = duration;
-            duration = m_dllAvUtil.av_rescale_rnd(stream->duration, stream->time_base.num * AV_TIME_BASE, stream->time_base.den, AV_ROUND_NEAR_INF);
-            if ((m_pFormatContext->duration == (int64_t)AV_NOPTS_VALUE && m_pFormatContext->file_size > 0)
-                ||  (m_pFormatContext->duration != (int64_t)AV_NOPTS_VALUE && duration > m_pFormatContext->duration))
-              m_pFormatContext->duration = duration;
-          }
+            if(duration > stream->duration)
+            {
+              stream->duration = duration;
+              duration = m_dllAvUtil.av_rescale_rnd(stream->duration, stream->time_base.num * AV_TIME_BASE, stream->time_base.den, AV_ROUND_NEAR_INF);
+              if ((m_pFormatContext->duration == (int64_t)AV_NOPTS_VALUE && m_pFormatContext->file_size > 0)
+              ||  (m_pFormatContext->duration != (int64_t)AV_NOPTS_VALUE && duration > m_pFormatContext->duration))
+                m_pFormatContext->duration = duration;
+            }
         }
 
         // check if stream seem to have grown since start
@@ -787,7 +788,8 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
       m_dllAvCodec.av_free_packet(&pkt);
     }
   }
-  } // end of lock scope
+  Unlock();
+
   if (bReturnEmpty && !pPacket)
     pPacket = CDVDDemuxUtils::AllocateDemuxPacket(0);
 
@@ -861,14 +863,12 @@ bool CDVDDemuxFFmpeg::SeekTime(int time, bool backwords, double *startpts)
   if (m_pFormatContext->start_time != (int64_t)AV_NOPTS_VALUE)
     seek_pts += m_pFormatContext->start_time;
 
-  int ret;
-  {
-    CSingleLock lock(m_critSection);
-    ret = m_dllAvFormat.av_seek_frame(m_pFormatContext, -1, seek_pts, backwords ? AVSEEK_FLAG_BACKWARD : 0);
+  Lock();
+  int ret = m_dllAvFormat.av_seek_frame(m_pFormatContext, -1, seek_pts, backwords ? AVSEEK_FLAG_BACKWARD : 0);
 
-    if(ret >= 0)
-      UpdateCurrentPTS();
-  }
+  if(ret >= 0)
+    UpdateCurrentPTS();
+  Unlock();
 
   if(m_iCurrentPts == DVD_NOPTS_VALUE)
     CLog::Log(LOGDEBUG, "%s - unknown position after seek", __FUNCTION__);
@@ -890,12 +890,13 @@ bool CDVDDemuxFFmpeg::SeekByte(__int64 pos)
 {
   g_demuxer = this;
 
-  CSingleLock lock(m_critSection);
+  Lock();
   int ret = m_dllAvFormat.av_seek_frame(m_pFormatContext, -1, pos, AVSEEK_FLAG_BYTE);
 
   if(ret >= 0)
     UpdateCurrentPTS();
 
+  Unlock();
   return (ret >= 0);
 }
 

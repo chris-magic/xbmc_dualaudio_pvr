@@ -35,10 +35,9 @@
 #define CONTROL_BT_NETWORK  96
 #define CONTROL_BT_VIDEO    97
 #define CONTROL_BT_HARDWARE 98
-#define CONTROL_BT_PVR      99
 
 #define CONTROL_START       CONTROL_BT_STORAGE
-#define CONTROL_END         CONTROL_BT_PVR
+#define CONTROL_END         CONTROL_BT_HARDWARE
 
 CGUIWindowSystemInfo::CGUIWindowSystemInfo(void)
 :CGUIWindow(WINDOW_SYSTEM_INFORMATION, "SettingsSystemInfo.xml")
@@ -47,6 +46,15 @@ CGUIWindowSystemInfo::CGUIWindowSystemInfo(void)
 }
 CGUIWindowSystemInfo::~CGUIWindowSystemInfo(void)
 {
+}
+bool CGUIWindowSystemInfo::OnAction(const CAction &action)
+{
+  if (action.GetID() == ACTION_PREVIOUS_MENU)
+  {
+    g_windowManager.PreviousWindow();
+    return true;
+  }
+  return CGUIWindow::OnAction(action);
 }
 bool CGUIWindowSystemInfo::OnMessage(CGUIMessage& message)
 {
@@ -96,7 +104,6 @@ void CGUIWindowSystemInfo::FrameMove()
 #endif
     SetControlLabel(i++, "%s: %s", 12390, SYSTEM_UPTIME);
     SetControlLabel(i++, "%s: %s", 12394, SYSTEM_TOTALUPTIME);
-    SetControlLabel(i++, "%s: %s", 12395, SYSTEM_BATTERY_LEVEL);
   }
   else if (m_section == CONTROL_BT_STORAGE)
   {
@@ -152,23 +159,6 @@ void CGUIWindowSystemInfo::FrameMove()
     SetControlLabel(i++, "%s: %s", 22012, SYSTEM_TOTAL_MEMORY);
     SetControlLabel(i++, "%s: %s", 158, SYSTEM_FREE_MEMORY);
   }
-  else if(m_section == CONTROL_BT_PVR)
-  {
-    SET_CONTROL_LABEL(40,g_localizeStrings.Get(19166));
-    int i = 2;
-
-    SetControlLabel(i++, "%s: %s", 19120, PVR_BACKEND_NUMBER);
-    i++; // empty line
-    SetControlLabel(i++, "%s: %s", 19012, PVR_BACKEND_NAME);
-    SetControlLabel(i++, "%s: %s", 19114, PVR_BACKEND_VERSION);
-    SetControlLabel(i++, "%s: %s", 19115, PVR_BACKEND_HOST);
-    SetControlLabel(i++, "%s: %s", 19116, PVR_BACKEND_DISKSPACE);
-    SetControlLabel(i++, "%s: %s", 19019, PVR_BACKEND_CHANNELS);
-    SetControlLabel(i++, "%s: %s", 19163, PVR_BACKEND_RECORDINGS);
-    SetControlLabel(i++, "%s: %s", 19025, PVR_BACKEND_TIMERS);
-  }
-  SET_CONTROL_LABEL(52, "XBMC "+g_infoManager.GetLabel(SYSTEM_BUILD_VERSION)+" (Compiled : "+g_infoManager.GetLabel(SYSTEM_BUILD_DATE)+")");
-
   CGUIWindow::FrameMove();
 }
 

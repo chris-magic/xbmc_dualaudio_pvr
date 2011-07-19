@@ -34,4 +34,6 @@ class CGUIStandardWindow :
 public:
   CGUIStandardWindow(int id, const CStdString &xmlFile);
   virtual ~CGUIStandardWindow(void);
+
+  virtual bool OnAction(const CAction &action);
 };

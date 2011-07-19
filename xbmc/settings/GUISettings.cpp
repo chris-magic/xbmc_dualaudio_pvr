@@ -49,14 +49,11 @@ using namespace std;
 using namespace ADDON;
 
 // String id's of the masks
-#define MASK_DAYS   17999
-#define MASK_HOURS  17998
 #define MASK_MINS   14044
 #define MASK_SECS   14045
 #define MASK_MS    14046
 #define MASK_PERCENT 14047
 #define MASK_KBPS   14048
-#define MASK_MB    17997
 #define MASK_KB    14049
 #define MASK_DB    14050
 
@@ -331,7 +328,7 @@ void CGUISettings::Initialize()
   encoders.insert(make_pair(34001,CDDARIP_ENCODER_VORBIS));
   encoders.insert(make_pair(34002,CDDARIP_ENCODER_WAV));
   encoders.insert(make_pair(34005,CDDARIP_ENCODER_FLAC));
-  AddInt(acd, "audiocds.encoder", 621, CDDARIP_ENCODER_FLAC, encoders, SPIN_CONTROL_TEXT);
+  AddInt(acd, "audiocds.encoder", 621, CDDARIP_ENCODER_LAME, encoders, SPIN_CONTROL_TEXT);
 
   map<int,int> qualities;
   qualities.insert(make_pair(604,CDDARIP_QUALITY_CBR));
@@ -474,6 +471,59 @@ void CGUISettings::Initialize()
   AddSeparator(ao, "audiooutput.sep3");
 #elif defined(_WIN32)
   AddString(ao, "audiooutput.audiodevice", 545, "Default", SPIN_CONTROL_TEXT);
+#endif
+
+#if defined(_LINUX)
+  AddSeparator(ao, "audiooutput.sep2");
+#else
+  AddSeparator(ao, "audiooutput.sep1");
+#endif
+
+	map<int,int> audiomode2;
+	audiomode2.insert(make_pair(13106,AUDIO_NONE));
+	audiomode2.insert(make_pair(338,AUDIO_ANALOG));
+	audiomode2.insert(make_pair(339,AUDIO_IEC958));
+	audiomode2.insert(make_pair(420,AUDIO_HDMI  ));
+	AddInt(ao, "audiooutput2.mode", 337, AUDIO_NONE, audiomode2, SPIN_CONTROL_TEXT);
+  
+	map<int,int> channelLayout2;
+	for(int layout2 = 0; layout2 < PCM_MAX_LAYOUT; ++layout2)
+	  channelLayout2.insert(make_pair(34101+layout2, layout2));
+	AddInt(ao, "audiooutput2.channellayout", 34100, PCM_LAYOUT_2_0, channelLayout2, SPIN_CONTROL_TEXT);
+	AddBool(ao, "audiooutput2.dontnormalizelevels", 346, true);
+  
+#if (defined(__APPLE__) && defined(__arm__))
+  if (g_sysinfo.IsAppleTV2())
+  {
+    AddBool(ao, "audiooutput2.ac3passthrough", 364, false);
+    AddBool(ao, "audiooutput2.dtspassthrough", 254, false);
+  }
+  else
+  {
+    AddBool(NULL, "audiooutput2.ac3passthrough", 364, false);
+    AddBool(NULL, "audiooutput2.dtspassthrough", 254, false);
+  }
+#else
+	AddBool(ao, "audiooutput2.ac3passthrough", 364, true);
+	AddBool(ao, "audiooutput2.dtspassthrough", 254, true);
+#endif
+	AddBool(NULL, "audiooutput2.passthroughaac", 299, false);
+	AddBool(NULL, "audiooutput2.passthroughmp1", 300, false);
+	AddBool(NULL, "audiooutput2.passthroughmp2", 301, false);
+	AddBool(NULL, "audiooutput2.passthroughmp3", 302, false);
+  
+#ifdef __APPLE__
+	AddString(ao, "audiooutput2.audiodevice", 545, "Default", SPIN_CONTROL_TEXT);
+#elif defined(_LINUX)
+	AddSeparator(ao, "audiooutput2.sep3");
+	AddString(ao, "audiooutput2.audiodevice", 545, "default", SPIN_CONTROL_TEXT);
+	AddString(ao, "audiooutput2.customdevice", 1300, "", EDIT_CONTROL_INPUT);
+	AddSeparator(ao, "audiooutput2.sep4");
+	AddString(ao, "audiooutput2.passthroughdevice", 546, "iec958", SPIN_CONTROL_TEXT);
+	AddString(ao, "audiooutput2.custompassthrough", 1301, "", EDIT_CONTROL_INPUT);
+	AddSeparator(ao, "audiooutput2.sep5");
+#elif defined(_WIN32)
+	AddString(ao, "audiooutput2.audiodevice", 545, "Default", SPIN_CONTROL_TEXT);
 #endif
 
   CSettingsCategory* in = AddCategory(4, "input", 14094);
@@ -804,56 +854,6 @@ void CGUISettings::Initialize()
   AddInt(NULL, "window.height", 0, 480, 10, 1, INT_MAX, SPIN_CONTROL_INT);
 
   AddPath(NULL,"system.playlistspath",20006,"set default",BUTTON_CONTROL_PATH_INPUT,false);
-
-  // tv settings (access over TV menu from home window)
-  AddGroup(8, 19180);
-  CSettingsCategory* pvr = AddCategory(8, "pvrmanager", 128);
-  AddBool(pvr, "pvrmanager.enabled", 449, false);
-  AddSeparator(pvr, "pvrmanager.sep1");
-  AddBool(pvr, "pvrmanager.syncchannelgroups", 19221, true);
-  AddBool(pvr, "pvrmanager.backendchannelorder", 19231, false);
-  AddBool(pvr, "pvrmanager.usebackendchannelnumbers", 19234, false);
-  AddSeparator(pvr, "pvrmanager.sep2");
-  AddString(pvr, "pvrmanager.channelmanager", 19199, "", BUTTON_CONTROL_STANDARD);
-  AddString(pvr, "pvrmanager.channelscan", 19117, "", BUTTON_CONTROL_STANDARD);
-  AddString(pvr, "pvrmanager.resetdb", 19185, "", BUTTON_CONTROL_STANDARD);
-
-  CSettingsCategory* pvrm = AddCategory(8, "pvrmenu", 19181);
-  AddBool(pvrm, "pvrmenu.infoswitch", 19178, true);
-  AddBool(pvrm, "pvrmenu.infotimeout", 19179, true);
-  AddBool(pvrm, "pvrmenu.closechannelosdonswitch", 19229, false);
-  AddInt(pvrm, "pvrmenu.infotime", 19184, 5, 1, 1, 10, SPIN_CONTROL_INT_PLUS, MASK_SECS);
-  AddBool(pvrm, "pvrmenu.hidevideolength", 19169, true);
-  AddSeparator(pvrm, "pvrmenu.sep1");
-  AddString(pvrm, "pvrmenu.iconpath", 19018, "", BUTTON_CONTROL_PATH_INPUT, false, 657);
-  AddString(pvrm, "pvrmenu.searchicons", 19167, "", BUTTON_CONTROL_STANDARD);
-
-  CSettingsCategory* pvre = AddCategory(8, "epg", 19069);
-  AddInt(pvre, "epg.defaultguideview", 19065, GUIDE_VIEW_NOW, GUIDE_VIEW_CHANNEL, 1, GUIDE_VIEW_TIMELINE, SPIN_CONTROL_TEXT);
-  AddInt(pvre, "epg.daystodisplay", 19182, 2, 1, 1, 14, SPIN_CONTROL_INT_PLUS, MASK_DAYS);
-  AddSeparator(pvre, "epg.sep1");
-  AddInt(pvre, "epg.epgupdate", 19071, 120, 15, 15, 480, SPIN_CONTROL_INT_PLUS, MASK_MINS);
-  AddBool(pvre, "epg.preventupdateswhileplayingtv", 19230, false);
-  AddBool(pvre, "epg.ignoredbforclient", 19072, false);
-  AddString(pvre, "epg.resetepg", 19187, "", BUTTON_CONTROL_STANDARD);
-
-  CSettingsCategory* pvrp = AddCategory(8, "pvrplayback", 19177);
-  AddBool(pvrp, "pvrplayback.playminimized", 19171, true);
-  AddInt(pvrp, "pvrplayback.startlast", 19189, START_LAST_CHANNEL_OFF, START_LAST_CHANNEL_OFF, 1, START_LAST_CHANNEL_ON, SPIN_CONTROL_TEXT);
-  AddBool(pvrp, "pvrplayback.switchautoclose", 19168, true);
-  AddBool(pvrp, "pvrplayback.signalquality", 19037, true);
-  AddSeparator(pvrp, "pvrplayback.sep1");
-  AddInt(pvrp, "pvrplayback.scantime", 19170, 15, 1, 1, 60, SPIN_CONTROL_INT_PLUS, MASK_SECS);
-  AddInt(pvrp, "pvrplayback.channelentrytimeout", 19073, 0, 0, 250, 2000, SPIN_CONTROL_INT_PLUS, MASK_MS);
-
-  CSettingsCategory* pvrr = AddCategory(8, "pvrrecord", 19043);
-  AddInt(pvrr, "pvrrecord.instantrecordtime", 19172, 180, 1, 1, 720, SPIN_CONTROL_INT_PLUS, MASK_MINS);
-  AddInt(pvrr, "pvrrecord.defaultpriority", 19173, 50, 1, 1, 100, SPIN_CONTROL_INT_PLUS);
-  AddInt(pvrr, "pvrrecord.defaultlifetime", 19174, 99, 1, 1, 365, SPIN_CONTROL_INT_PLUS, MASK_DAYS);
-  AddInt(pvrr, "pvrrecord.marginstart", 19175, 2, 1, 1, 60, SPIN_CONTROL_INT_PLUS, MASK_MINS);
-  AddInt(pvrr, "pvrrecord.marginend", 19176, 10, 1, 1, 60, SPIN_CONTROL_INT_PLUS, MASK_MINS);
-  AddSeparator(pvrr, "pvrrecord.sep1");
-  AddBool(pvr, "pvrrecord.timernotifications", 19233, true);
 }
 
 CGUISettings::~CGUISettings(void)
@@ -931,9 +931,6 @@ void CGUISettings::SetBool(const char *strSetting, bool bSetting)
   if (it != settingsMap.end())
   { // old category
     ((CSettingBool*)(*it).second)->SetData(bSetting);
-
-    SetChanged();
-
     return ;
   }
   // Assert here and write debug output
@@ -947,9 +944,6 @@ void CGUISettings::ToggleBool(const char *strSetting)
   if (it != settingsMap.end())
   { // old category
     ((CSettingBool*)(*it).second)->SetData(!((CSettingBool *)(*it).second)->GetData());
-
-    SetChanged();
-
     return ;
   }
   // Assert here and write debug output
@@ -985,9 +979,6 @@ void CGUISettings::SetFloat(const char *strSetting, float fSetting)
   if (it != settingsMap.end())
   {
     ((CSettingFloat *)(*it).second)->SetData(fSetting);
-
-    SetChanged();
-
     return ;
   }
   // Assert here and write debug output
@@ -1062,9 +1053,6 @@ void CGUISettings::SetInt(const char *strSetting, int iSetting)
   if (it != settingsMap.end())
   {
     ((CSettingInt *)(*it).second)->SetData(iSetting);
-
-    SetChanged();
-
     return ;
   }
   // Assert here and write debug output
@@ -1136,9 +1124,6 @@ void CGUISettings::SetString(const char *strSetting, const char *strData)
   if (it != settingsMap.end())
   {
     ((CSettingString *)(*it).second)->SetData(strData);
-
-    SetChanged();
-
     return ;
   }
   // Assert here and write debug output
@@ -1279,8 +1264,6 @@ void CGUISettings::LoadFromXML(TiXmlElement *pRootElement, mapIter &it, bool adv
       }
     }
   }
-
-  SetChanged();
 }
 
 void CGUISettings::SaveXML(TiXmlNode *pRootNode)
@@ -1317,8 +1300,6 @@ void CGUISettings::SaveXML(TiXmlNode *pRootNode)
       }
     }
   }
-
-  SetChanged();
 }
 
 void CGUISettings::Clear()
@@ -1329,8 +1310,6 @@ void CGUISettings::Clear()
   for (unsigned int i = 0; i < settingsGroups.size(); i++)
     delete settingsGroups[i];
   settingsGroups.clear();
-
-  SetChanged();
 }
 
 float square_error(float x, float y)
@@ -1397,6 +1376,4 @@ void CGUISettings::SetResolution(RESOLUTION res)
   }
   SetString("videoscreen.screenmode", mode);
   m_LookAndFeelResolution = res;
-
-  SetChanged();
 }

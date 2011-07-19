@@ -57,18 +57,15 @@
     "default": -1,
     "minimum": 1
   },
-  "Library.Fields.Genre": {
+  "Library.Genres": {
     "type": "array",
-    "uniqueItems": true,
-    "items": { "type": "string", "enum": [ "title", "thumbnail" ] }
-  },
-  "Library.Details.Genre": {
-    "type": "object",
-    "properties": {
-      "genreid": { "$ref": "Library.Id", "required": true },
-      "label": { "type": "string", "required": true },
-      "title": { "type": "string" },
-      "thumbnail": { "type": "string" }
+    "items": { "type": "object",
+      "properties": {
+        "genreid": { "$ref": "Library.Id", "required": true },
+        "genre": { "type": "string", "required": true },
+        "label": { "type": "string", "required": true },
+        "thumbnail": { "type": "string" }
+      }
     }
   },
   "Audio.Fields.Artist": {
@@ -101,6 +98,11 @@
                 "musicbrainzalbumid", "musicbrainzalbumartistid",
                 "playcount", "fanart", "thumbnail", "file" ]
     }
+  },
+  "Audio.Fields.Genre": {
+    "type": "array",
+    "uniqueItems": true,
+    "items": { "type": "string", "enum": [ "thumbnail" ] }
   },
   "Audio.Details.Artist": {
     "type": "object",
@@ -175,13 +177,13 @@
     "type": "array",
     "uniqueItems": true,
     "items": { "type": "string",
-      "description": "Requesting the cast, set, showling and/or resume field will result in increased response times",
+      "description": "Requesting the cast, set and/or showlink field will result in increased response times",
       "enum": [ "title", "genre", "year", "rating", "director", "trailer",
                 "tagline", "plot", "plotoutline", "originaltitle", "lastplayed",
                 "playcount", "writer", "studio", "mpaa", "cast", "country",
                 "imdbnumber", "premiered", "productioncode", "runtime", "set",
                 "showlink", "streamDetails", "top250", "votes",
-                "fanart", "thumbnail", "file", "sorttitle", "resume" ]
+                "fanart", "thumbnail", "file", "sorttitle" ]
     }
   },
   "Video.Fields.MovieSet": {
@@ -214,23 +216,22 @@
     "type": "array",
     "uniqueItems": true,
     "items": { "type": "string",
-      "description": "Requesting the cast and/or resume field will result in increased response times",
+      "description": "Requesting the cast field will result in increased response times",
       "enum": [ "title", "plot", "votes", "rating", "writer",
                 "firstaired", "playcount", "runtime", "director",
                 "productioncode", "season", "episode", "originaltitle",
                 "showtitle", "cast", "streamDetails", "lastplayed", "fanart",
-                "thumbnail", "file", "resume"  ]
+                "thumbnail", "file" ]
     }
   },
   "Video.Fields.MusicVideo": {
     "type": "array",
     "uniqueItems": true,
     "items": { "type": "string",
-      "description": "Requesting the resume field will result in increased response times",
       "enum": [ "title", "playcount", "runtime", "director",
                 "studio", "year", "plot", "album", "artist",
                 "genre", "track", "streamDetails", "lastplayed",
-                "fanart", "thumbnail", "file", "resume" ]
+                "fanart", "thumbnail", "file" ]
     }
   },
   "Video.Cast": {
@@ -238,8 +239,7 @@
     "items": { "type": "object",
       "properties": {
         "name": { "type": "string", "required": true },
-        "role": { "type": "string", "required": true },
-        "thumbnail": { "type": "string" }
+        "role": { "type": "string", "required": true }
       }
     }
   },
@@ -273,13 +273,6 @@
           }
         }
       }
-    }
-  },
-  "Video.Resume": {
-    "type": "object",
-    "properties": {
-      "position": { "type": "number", "minimum": 0 },
-      "total": { "type": "number", "minimum": 0 }
     }
   },
   "Video.Details.Movie": {
@@ -316,8 +309,7 @@
       "showlink": { "type": "string" },
       "streamDetails": { "$ref": "Video.Streams" },
       "top250": { "type": "integer" },
-      "votes": { "type": "string" },
-      "resume": { "$ref": "Video.Resume" }
+      "votes": { "type": "string" }
     }
   },
   "Video.Details.MovieSet": {
@@ -408,8 +400,7 @@
       "showtitle": { "type": "string" },
       "cast": { "$ref": "Video.Cast" },
       "streamDetails": { "$ref": "Video.Streams" },
-      "lastplayed": { "type": "string" },
-      "resume": { "$ref": "Video.Resume" }
+      "lastplayed": { "type": "string" }
     }
   },
   "Video.Details.MusicVideo": {
@@ -432,8 +423,16 @@
       "genre": { "type": "string" },
       "track": { "type": "integer" },
       "streamDetails": { "$ref": "Video.Streams" },
-      "lastplayed": { "type": "string" },
-      "resume": { "$ref": "Video.Resume" }
+      "lastplayed": { "type": "string" }
+    }
+  },
+  "Video.Details.Genre": {
+    "type": "object",
+    "properties": {
+      "genreid": { "$ref": "Library.Id", "required": true },
+      "genre": { "type": "string", "required": true },
+      "label": { "type": "string", "required": true },
+      "thumbnail": { "type": "string" }
     }
   },
   "Playlist.Id": {
@@ -448,18 +447,12 @@
     "minimum": 0,
     "default": -1
   },
-  "Playlist.Repeat": {
-    "type": "string",
-    "enum": [ "off", "one", "all" ]
-  },
   "Playlist.State": {
     "type": "object",
     "properties": {
       "current": { "type": "integer", "required": true },
       "playing": { "type": "boolean", "required": true },
-      "paused": { "type": "boolean", "required": true },
-      "repeat": { "$ref": "Playlist.Repeat", "required": true },
-      "shuffled": { "type": "boolean", "required": true }
+      "paused": { "type": "boolean", "required": true }
     }
   },
   "Playlist.Video.Item": {
@@ -488,11 +481,6 @@
   "Files.Media": {
     "type": "string",
     "enum": [ "video", "music", "pictures", "files", "programs" ]
-  },
-  "List.Amount": {
-    "type": "integer",
-    "default": -1,
-    "minimum": 0
   },
   "List.Limits": {
     "type": "object",
@@ -533,7 +521,7 @@
                 "plotoutline", "originaltitle", "lastplayed", "writer", "studio",
                 "mpaa", "cast", "country", "imdbnumber", "premiered", "productioncode",
                 "runtime", "set", "showlink", "streamDetails", "top250", "votes",
-                "firstaired", "season", "episode", "showtitle", "thumbnail", "file", "resume" ]
+                "firstaired", "season", "episode", "showtitle", "thumbnail", "file" ]
     }
   },
   "List.Fields.Video": {
@@ -546,7 +534,7 @@
                   "mpaa", "country", "imdbnumber", "premiered", "productioncode",
                   "runtime", "showlink", "streamDetails", "top250", "votes",
                   "firstaired", "season", "episode", "showtitle",
-                  "thumbnail", "file", "sorttitle", "episodeguide", "resume" ]
+                  "thumbnail", "file", "sorttitle", "episodeguide" ]
     }
   },
   "List.Items.All": {
@@ -599,8 +587,7 @@
         "firstaired": { "type": "string" },
         "season": { "type": "integer" },
         "episode": { "type": "integer" },
-        "showtitle": { "type": "string" },
-        "resume": { "$ref": "Video.Resume" }
+        "showtitle": { "type": "string" }
       }
     }
   },
@@ -740,8 +727,7 @@
         "firstaired": { "type": "string" },
         "season": { "type": "integer" },
         "episode": { "type": "integer" },
-        "showtitle": { "type": "string" },
-        "resume": { "$ref": "Video.Resume" }
+        "showtitle": { "type": "string" }
       }
     }
   }

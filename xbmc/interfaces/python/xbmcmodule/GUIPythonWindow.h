@@ -22,7 +22,6 @@
  */
 
 #include "guilib/GUIWindow.h"
-#include "threads/Event.h"
 
 class PyXBMCAction
 {
@@ -55,5 +54,5 @@ public:
 protected:
   void* pCallbackWindow;
   void* m_threadState;
-  CEvent           m_actionEvent;
+  HANDLE           m_actionEvent;
 };

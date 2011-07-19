@@ -86,7 +86,7 @@ public:
 protected:
   HANDLE  m_hCacheFileRead;
   HANDLE  m_hCacheFileWrite;
-  CEvent*  m_hDataAvailEvent;
+  HANDLE  m_hDataAvailEvent;
   volatile int64_t m_nStartPosition;
   volatile int64_t m_nWritePosition;
   volatile int64_t m_nReadPosition;
