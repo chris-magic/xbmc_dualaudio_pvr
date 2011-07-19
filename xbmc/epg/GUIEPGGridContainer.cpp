@@ -24,7 +24,6 @@
 #include "guilib/GUIListItem.h"
 #include "guilib/GUIFontManager.h"
 #include "guilib/LocalizeStrings.h"
-#include "guilib/DirtyRegion.h"
 #include "lib/tinyXML/tinyxml.h"
 #include "utils/log.h"
 #include "utils/TimeUtils.h"
@@ -94,19 +93,6 @@ CGUIEPGGridContainer::CGUIEPGGridContainer(int parentID, int controlID, float po
 
 CGUIEPGGridContainer::~CGUIEPGGridContainer(void)
 {
-}
-
-void CGUIEPGGridContainer::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
-{
-  bool changed = false;
-  m_renderTime = currentTime;
-
-  changed = true;
-
-  if (changed)
-    MarkDirtyRegion();
-
-  CGUIControl::Process(currentTime, dirtyregions);
 }
 
 void CGUIEPGGridContainer::Render()
@@ -205,11 +191,7 @@ void CGUIEPGGridContainer::Render()
     item->SetLayout(layout);
   }
   if (item->GetLayout())
-  {
-    CDirtyRegionList dirtyRegions;
-    item->GetLayout()->Process(item.get(),m_parentID,m_renderTime,dirtyRegions);
     item->GetLayout()->Render(item.get(), m_parentID);
-  }
   g_graphicsContext.RestoreOrigin();
 
   int cacheBeforeRuler, cacheAfterRuler;
@@ -269,11 +251,7 @@ void CGUIEPGGridContainer::Render()
       item->SetLayout(layout);
     }
     if (item->GetLayout())
-    {
-      CDirtyRegionList dirtyRegions;
-      item->GetLayout()->Process(item.get(),m_parentID,m_renderTime,dirtyRegions);
       item->GetLayout()->Render(item.get(), m_parentID);
-    }
     g_graphicsContext.RestoreOrigin();
 
     rulerOffset += m_rulerUnit;
@@ -418,8 +396,6 @@ void CGUIEPGGridContainer::RenderChannelItem(float posX, float posY, CGUIListIte
           subItem = m_lastChannel->GetFocusedLayout()->GetFocusedItem();
         item->GetFocusedLayout()->SetFocusedItem(subItem ? subItem : 1);
       }
-      CDirtyRegionList dirtyRegions;
-      item->GetFocusedLayout()->Process(item,m_parentID,m_renderTime,dirtyRegions);
       item->GetFocusedLayout()->Render(item, m_parentID);
     }
     m_lastChannel = item;
@@ -434,17 +410,9 @@ void CGUIEPGGridContainer::RenderChannelItem(float posX, float posY, CGUIListIte
       item->SetLayout(layout);
     }
     if (item->GetFocusedLayout() && item->GetFocusedLayout()->IsAnimating(ANIM_TYPE_UNFOCUS))
-    {
-      CDirtyRegionList dirtyRegions;
-      item->GetFocusedLayout()->Process(item,m_parentID,m_renderTime,dirtyRegions);
       item->GetFocusedLayout()->Render(item, m_parentID);
-    }
     else if (item->GetLayout())
-    {
-      CDirtyRegionList dirtyRegions;
-      item->GetLayout()->Process(item,m_parentID,m_renderTime,dirtyRegions);
       item->GetLayout()->Render(item, m_parentID);
-    }
   }
   g_graphicsContext.RestoreOrigin();
 }
@@ -490,8 +458,6 @@ void CGUIEPGGridContainer::RenderProgrammeItem(float posX, float posY, float wid
           subItem = m_lastItem->GetFocusedLayout()->GetFocusedItem();
         item->GetFocusedLayout()->SetFocusedItem(subItem ? subItem : 1);
       }
-      CDirtyRegionList dirtyRegions;
-      item->GetFocusedLayout()->Process(item,m_parentID,m_renderTime,dirtyRegions);
       item->GetFocusedLayout()->Render(item, m_parentID);
     }
     m_lastItem = item;
@@ -517,17 +483,9 @@ void CGUIEPGGridContainer::RenderProgrammeItem(float posX, float posY, float wid
       item->SetLayout(layout);
     }
     if (item->GetFocusedLayout() && item->GetFocusedLayout()->IsAnimating(ANIM_TYPE_UNFOCUS))
-    {
-      CDirtyRegionList dirtyRegions;
-      item->GetFocusedLayout()->Process(item,m_parentID,m_renderTime,dirtyRegions);
       item->GetFocusedLayout()->Render(item, m_parentID);
-    }
     else if (item->GetLayout())
-    {
-      CDirtyRegionList dirtyRegions;
-      item->GetLayout()->Process(item,m_parentID,m_renderTime,dirtyRegions);
       item->GetLayout()->Render(item, m_parentID);
-    }
   }
   g_graphicsContext.RestoreOrigin();
 }
@@ -1370,8 +1328,9 @@ void CGUIEPGGridContainer::SetFocus(bool bOnOff)
   CGUIControl::SetFocus(bOnOff);
 }
 
-void CGUIEPGGridContainer::DoRender()
+void CGUIEPGGridContainer::DoRender(unsigned int currentTime)
 {
+  m_renderTime = currentTime;
   CGUIControl::DoRender();
   m_wasReset = false;
 }
