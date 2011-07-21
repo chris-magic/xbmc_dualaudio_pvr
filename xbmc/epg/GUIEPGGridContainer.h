@@ -64,9 +64,8 @@ namespace EPG
     virtual int GetSelectedItem() const;
     const int GetSelectedChannel() { return m_channelCursor + m_channelOffset; }
 
-    virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
-    virtual void DoRender();
-    virtual void Render();
+    void DoRender(unsigned int currentTime);
+    void Render();
     void LoadLayout(TiXmlElement *layout);
     void LoadContent(TiXmlElement *content);
 
