@@ -29,11 +29,7 @@
 #include "utils/URIUtils.h"
 #include "settings/GUISettings.h"
 #include "settings/Settings.h"
-#include "settings/AdvancedSettings.h"
 #include "addons/Skin.h"
-#include "GUITexture.h"
-#include "windowing/WindowingFactory.h"
-#include "utils/TimeUtils.h"
 
 using namespace std;
 
@@ -51,10 +47,8 @@ CGUIWindowManager::~CGUIWindowManager(void)
 
 void CGUIWindowManager::Initialize()
 {
-  m_tracker.SelectAlgorithm();
-  m_initialized = true;
-
   LoadNotOnDemandWindows();
+  m_initialized = true;
 }
 
 bool CGUIWindowManager::SendMessage(int message, int senderID, int destID, int param1, int param2)
@@ -344,8 +338,9 @@ void CGUIWindowManager::ActivateWindow(int iWindowID, const vector<CStdString>& 
   if (!g_application.IsCurrentThread())
   {
     // make sure graphics lock is not held
-    CSingleExit leaveIt(g_graphicsContext);
+    int nCount = ExitCriticalSection(g_graphicsContext);
     g_application.getApplicationMessenger().ActivateWindow(iWindowID, params, swappingWindows);
+    RestoreCriticalSection(g_graphicsContext, nCount);
   }
   else
     ActivateWindow_Internal(iWindowID, params, swappingWindows);
@@ -492,41 +487,15 @@ bool RenderOrderSortFunction(CGUIWindow *first, CGUIWindow *second)
   return first->GetRenderOrder() < second->GetRenderOrder();
 }
 
-void CGUIWindowManager::Process(unsigned int currentTime)
+void CGUIWindowManager::Render()
 {
   assert(g_application.IsCurrentThread());
   CSingleLock lock(g_graphicsContext);
-
-  CDirtyRegionList dirtyregions;
-
-  CGUIWindow* pWindow = GetWindow(GetActiveWindow());
-  if (pWindow)
-    pWindow->DoProcess(currentTime, dirtyregions);
-
-  // process all dialogs - visibility may change etc.
-  for (WindowMap::iterator it = m_mapWindows.begin(); it != m_mapWindows.end(); it++)
-  {
-    CGUIWindow *pWindow = (*it).second;
-    if (pWindow && pWindow->IsDialog())
-      pWindow->DoProcess(currentTime, dirtyregions);
-  }
-
-  for (CDirtyRegionList::iterator itr = dirtyregions.begin(); itr != dirtyregions.end(); itr++)
-    m_tracker.MarkDirtyRegion(*itr);
-}
-
-void CGUIWindowManager::MarkDirty()
-{
-  m_tracker.MarkDirtyRegion(CRect(0, 0, (float)g_graphicsContext.GetWidth(), (float)g_graphicsContext.GetHeight()));
-}
-
-void CGUIWindowManager::RenderPass()
-{
   CGUIWindow* pWindow = GetWindow(GetActiveWindow());
   if (pWindow)
   {
     pWindow->ClearBackground();
-    pWindow->DoRender();
+    pWindow->Render();
   }
 
   // we render the dialogs based on their render order.
@@ -536,51 +505,8 @@ void CGUIWindowManager::RenderPass()
   for (iDialog it = renderList.begin(); it != renderList.end(); ++it)
   {
     if ((*it)->IsDialogRunning())
-      (*it)->DoRender();
+      (*it)->Render();
   }
-}
-
-bool CGUIWindowManager::Render()
-{
-  assert(g_application.IsCurrentThread());
-  CSingleLock lock(g_graphicsContext);
-
-  CDirtyRegionList dirtyRegions = m_tracker.GetDirtyRegions();
-
-  bool hasRendered = false;
-  // If we visualize the regions we will always render the entire viewport
-  if (g_advancedSettings.m_guiVisualizeDirtyRegions || g_advancedSettings.m_guiAlgorithmDirtyRegions == DIRTYREGION_SOLVER_NONE)
-  {
-    RenderPass();
-    hasRendered = true;
-  }
-  else
-  {
-    for (CDirtyRegionList::const_iterator i = dirtyRegions.begin(); i != dirtyRegions.end(); i++)
-    {
-      if (i->IsEmpty())
-        continue;
-
-      g_graphicsContext.SetScissors(*i);
-      RenderPass();
-      hasRendered = true;
-    }
-    g_graphicsContext.ResetScissors();
-  }
-
-  if (g_advancedSettings.m_guiVisualizeDirtyRegions)
-  {
-    g_graphicsContext.SetRenderingResolution(g_graphicsContext.GetResInfo(), false);
-    const CDirtyRegionList &markedRegions  = m_tracker.GetMarkedRegions(); 
-    for (CDirtyRegionList::const_iterator i = markedRegions.begin(); i != markedRegions.end(); i++)
-      CGUITexture::DrawQuad(*i, 0x0fff0000);
-    for (CDirtyRegionList::const_iterator i = dirtyRegions.begin(); i != dirtyRegions.end(); i++)
-      CGUITexture::DrawQuad(*i, 0x4c00ff00);
-  }
-
-  m_tracker.CleanMarkedRegions();
-
-  return hasRendered;
 }
 
 void CGUIWindowManager::FrameMove()
@@ -624,7 +550,24 @@ CGUIWindow* CGUIWindowManager::GetWindow(int id) const
   return NULL;
 }
 
-void CGUIWindowManager::ProcessRenderLoop(bool renderOnly /*= false*/)
+// Shows and hides modeless dialogs as necessary.
+void CGUIWindowManager::UpdateModelessVisibility()
+{
+  CSingleLock lock(g_graphicsContext);
+  for (WindowMap::iterator it = m_mapWindows.begin(); it != m_mapWindows.end(); it++)
+  {
+    CGUIWindow *pWindow = (*it).second;
+    if (pWindow && pWindow->IsDialog() && pWindow->GetVisibleCondition())
+    {
+      if (g_infoManager.GetBool(pWindow->GetVisibleCondition(), GetActiveWindow()))
+        ((CGUIDialog *)pWindow)->Show();
+      else
+        ((CGUIDialog *)pWindow)->Close();
+    }
+  }
+}
+
+void CGUIWindowManager::Process(bool renderOnly /*= false*/)
 {
   if (g_application.IsCurrentThread() && m_pCallback)
   {
@@ -633,8 +576,6 @@ void CGUIWindowManager::ProcessRenderLoop(bool renderOnly /*= false*/)
     {
       m_pCallback->Process();
       m_pCallback->FrameMove();
-    } else {
-      Process(CTimeUtils::GetFrameTime());
     }
     m_pCallback->Render();
     m_iNested--;

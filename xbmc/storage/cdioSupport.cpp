@@ -32,7 +32,7 @@
 #include <cdio/cd_types.h>
 
 #if defined(_WIN32)
-#pragma comment(lib, "libcdio.dll.lib")
+#pragma comment(lib, "libcdio.lib")
 #endif
 
 using namespace MEDIA_DETECT;

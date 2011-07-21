@@ -39,28 +39,16 @@ CJSONVariantParser::CJSONVariantParser(IParseCallback *callback)
 {
   m_callback = callback;
 
-#if YAJL_MAJOR == 2
-  m_handler = yajl_alloc(&callbacks, NULL, this);
-
-  yajl_config(m_handler, yajl_allow_comments, 1);
-  yajl_config(m_handler, yajl_dont_validate_strings, 0);
-#else
   yajl_parser_config cfg = { 1, 1 };
 
   m_handler = yajl_alloc(&callbacks, &cfg, NULL, this);
-#endif
 
   m_status = ParseVariable;
 }
 
 CJSONVariantParser::~CJSONVariantParser()
 {
-#if YAJL_MAJOR == 2
-  yajl_complete_parse(m_handler);
-#else
   yajl_parse_complete(m_handler);
-#endif
-  yajl_free(m_handler);
 }
 
 void CJSONVariantParser::push_buffer(const unsigned char *buffer, unsigned int length)
@@ -98,11 +86,7 @@ int CJSONVariantParser::ParseBoolean(void * ctx, int boolean)
   return 1;
 }
 
-#if YAJL_MAJOR ==2
-int CJSONVariantParser::ParseInteger(void * ctx, long long integerVal)
-#else
 int CJSONVariantParser::ParseInteger(void * ctx, long integerVal)
-#endif
 {
   CJSONVariantParser *parser = (CJSONVariantParser *)ctx;
 
@@ -122,11 +106,7 @@ int CJSONVariantParser::ParseDouble(void * ctx, double doubleVal)
   return 1;
 }
 
-#if YAJL_MAJOR == 2
-int CJSONVariantParser::ParseString(void * ctx, const unsigned char * stringVal, size_t stringLen)
-#else
 int CJSONVariantParser::ParseString(void * ctx, const unsigned char * stringVal, unsigned int stringLen)
-#endif
 {
   CJSONVariantParser *parser = (CJSONVariantParser *)ctx;
 
@@ -145,11 +125,7 @@ int CJSONVariantParser::ParseMapStart(void * ctx)
   return 1;
 }
 
-#if YAJL_MAJOR == 2
-int CJSONVariantParser::ParseMapKey(void * ctx, const unsigned char * stringVal, size_t stringLen)
-#else
 int CJSONVariantParser::ParseMapKey(void * ctx, const unsigned char * stringVal, unsigned int stringLen)
-#endif
 {
   CJSONVariantParser *parser = (CJSONVariantParser *)ctx;
 

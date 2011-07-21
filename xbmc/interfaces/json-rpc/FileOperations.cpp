@@ -108,9 +108,6 @@ JSON_STATUS CFileOperations::GetDirectory(const CStdString &method, ITransportLa
 
       if (items[i]->m_bIsFolder)
         filteredDirectories.Add(items[i]);
-      else if ((media == "video" && items[i]->HasVideoInfoTag()) ||
-               (media == "music" && items[i]->HasMusicInfoTag()))
-        filteredFiles.Add(items[i]);
       else
       {
         CFileItem fileItem;
@@ -234,9 +231,6 @@ bool CFileOperations::FillFileItemList(const CVariant &parameterObject, CFileIte
 
           if (items[i]->m_bIsFolder)
             filteredDirectories.Add(items[i]);
-          else if ((media == "video" && items[i]->HasVideoInfoTag()) ||
-                   (media == "music" && items[i]->HasMusicInfoTag()))
-            list.Add(items[i]);
           else
           {
             CFileItem fileItem;

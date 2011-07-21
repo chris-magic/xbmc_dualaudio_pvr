@@ -53,7 +53,6 @@ public:
   CStdString cpuFrequency;
   CStdString kernelVersion;
   CStdString macAddress;
-  CStdString batteryLevel;
 };
 
 class CSysInfoJob : public CJob
@@ -72,7 +71,6 @@ private:
   CStdString GetCPUFreqInfo();
   CStdString GetMACAddress();
   CStdString GetVideoEncoder();
-  CStdString GetBatteryLevel();
 
   CSysData m_info;
 };

@@ -22,16 +22,18 @@
  */
 
 #include "DVDCodecs/Overlay/DVDOverlay.h"
-#include "threads/CriticalSection.h"
 
 class CDVDInputStreamNavigator;
 class CDVDDemuxSPU;
 
-class CDVDOverlayContainer : public CCriticalSection
+class CDVDOverlayContainer
 {
 public:
   CDVDOverlayContainer();
   virtual ~CDVDOverlayContainer();
+
+  void Lock()   { EnterCriticalSection(&m_critSection); }
+  void Unlock() { LeaveCriticalSection(&m_critSection); }
 
   void Add(CDVDOverlay* pPicture); // add a overlay to the fifo
 
@@ -49,4 +51,6 @@ private:
   VecOverlaysIter Remove(VecOverlaysIter itOverlay); // removes a specific overlay
 
   VecOverlays m_overlays;
+
+  CRITICAL_SECTION m_critSection;
 };

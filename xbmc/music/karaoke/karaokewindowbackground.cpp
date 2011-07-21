@@ -143,11 +143,9 @@ void CKaraokeWindowBackground::Render()
 {
   // We cannot use CSingleLock on m_CritSectionVideoEnded, because OnPlayBackEnded() might be
   // called from a different thread, and since we cannot proceed on m_CritSectionShared, we'll deadlock
-  bool ended;
-  {
-    CSingleLock lock( m_CritSectionVideoEnded );
-    ended = m_videoEnded;
-  }
+  EnterCriticalSection( m_CritSectionVideoEnded );
+  bool ended = m_videoEnded;
+  LeaveCriticalSection( m_CritSectionVideoEnded );
 
   CSingleLock lock (m_CritSectionShared);
   // Do we need to restart video?
@@ -348,10 +346,9 @@ void CKaraokeWindowBackground::NextVideo()
   // Only one video selected, restarting
   m_videoLastTime = 0;
 
-  {
-    CSingleLock lock(m_CritSectionVideoEnded );
-    m_videoEnded = false;
-  }
+  EnterCriticalSection( m_CritSectionVideoEnded );
+  m_videoEnded = false;
+  LeaveCriticalSection( m_CritSectionVideoEnded );
 
   StartVideo( m_path, m_videoLastTime );
   CLog::Log( LOGDEBUG, "KaraokeVideoBackground: restarting video from the beginning" );

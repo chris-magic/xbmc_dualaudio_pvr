@@ -35,7 +35,6 @@
 #include "guilib/GUIWindowManager.h"      // for callback
 #include "GUIUserMessages.h"              // for callback
 #include "utils/StringUtils.h"
-#include "dialogs/GUIDialogKaiToast.h"
 
 using namespace std;
 using namespace XFILE;
@@ -192,7 +191,7 @@ bool CAddonInstaller::DoInstall(const AddonPtr &addon, const CStdString &hash, b
   //       missing deps.
   if (!CheckDependencies(addon))
   {
-    CGUIDialogKaiToast::QueueNotification(addon->Icon(), addon->Name(), g_localizeStrings.Get(24044), TOAST_DISPLAY_TIME, false);
+    g_application.m_guiDialogKaiToast.QueueNotification(addon->Icon(), addon->Name(), g_localizeStrings.Get(24044), TOAST_DISPLAY_TIME, false);
     return false;
   }
 
@@ -226,7 +225,7 @@ bool CAddonInstaller::InstallFromZip(const CStdString &path)
   URIUtils::CreateArchivePath(zipDir, "zip", path, "");
   if (!CDirectory::GetDirectory(zipDir, items) || items.Size() != 1 || !items[0]->m_bIsFolder)
   {
-    CGUIDialogKaiToast::QueueNotification("", path, g_localizeStrings.Get(24045), TOAST_DISPLAY_TIME, false);
+    g_application.m_guiDialogKaiToast.QueueNotification("", path, g_localizeStrings.Get(24045), TOAST_DISPLAY_TIME, false);
     return false;
   }
 
@@ -243,7 +242,7 @@ bool CAddonInstaller::InstallFromZip(const CStdString &path)
     // install the addon
     return DoInstall(addon);
   }
-  CGUIDialogKaiToast::QueueNotification("", path, g_localizeStrings.Get(24045), TOAST_DISPLAY_TIME, false);
+  g_application.m_guiDialogKaiToast.QueueNotification("", path, g_localizeStrings.Get(24045), TOAST_DISPLAY_TIME, false);
   return false;
 }
 
@@ -474,11 +473,11 @@ void CAddonInstallJob::OnPostInstall(bool reloadAddon)
 {
   if (m_addon->Type() < ADDON_VIZ_LIBRARY && g_settings.m_bAddonNotifications)
   {
-    CGUIDialogKaiToast::QueueNotification(m_addon->Icon(),
-                                          m_addon->Name(),
-                                          g_localizeStrings.Get(m_update ? 24065 : 24064),
-                                          TOAST_DISPLAY_TIME,false,
-                                          TOAST_DISPLAY_TIME);
+    g_application.m_guiDialogKaiToast.QueueNotification(m_addon->Icon(),
+                                                        m_addon->Name(),
+                                                        g_localizeStrings.Get(m_update ? 24065 : 24064),
+                                                        TOAST_DISPLAY_TIME,false,
+                                                        TOAST_DISPLAY_TIME);
   }
   if (m_addon->Type() == ADDON_SKIN)
   {
@@ -486,12 +485,8 @@ void CAddonInstallJob::OnPostInstall(bool reloadAddon)
                                                         g_localizeStrings.Get(24099),"","")))
     {
       g_guiSettings.SetString("lookandfeel.skin",m_addon->ID().c_str());
-      CGUIDialogKaiToast *toast = (CGUIDialogKaiToast *)g_windowManager.GetWindow(WINDOW_DIALOG_KAI_TOAST);
-      if (toast)
-      {
-        toast->ResetTimer();
-        toast->Close(true);
-      }
+      g_application.m_guiDialogKaiToast.ResetTimer();
+      g_application.m_guiDialogKaiToast.Close(true);
       g_application.getApplicationMessenger().ExecBuiltIn("ReloadSkin");
     }
   }
@@ -508,17 +503,19 @@ void CAddonInstallJob::ReportInstallError(const CStdString& addonID,
   {
     AddonPtr addon2;
     CAddonMgr::Get().GetAddon(addonID, addon2);
-    CGUIDialogKaiToast::QueueNotification(addon->Icon(),
-                                          addon->Name(),
-                                          g_localizeStrings.Get(addon2 ? 113 : 114),
-                                          TOAST_DISPLAY_TIME, false);
+    g_application.m_guiDialogKaiToast.QueueNotification(
+                                                        addon->Icon(),
+                                                        addon->Name(),
+                                                        g_localizeStrings.Get(addon2 ? 113 : 114),
+                                                        TOAST_DISPLAY_TIME, false);
   }
   else
   {
-    CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Error,
-                                          fileName,
-                                          g_localizeStrings.Get(114),
-                                          TOAST_DISPLAY_TIME, false);
+    g_application.m_guiDialogKaiToast.QueueNotification(
+                                                        CGUIDialogKaiToast::Error,
+                                                        fileName,
+                                                        g_localizeStrings.Get(114),
+                                                        TOAST_DISPLAY_TIME, false);
   }
 }
 

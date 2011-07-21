@@ -42,7 +42,6 @@
 #define HAS_UPNP
 #define HAS_VIDEO_PLAYBACK
 #define HAS_VISUALISATION
-#define HAS_PVRCLIENTS
 
 #ifdef HAVE_LIBMICROHTTPD
 #define HAS_WEB_SERVER
@@ -64,11 +63,6 @@
 #define HAS_FILESYSTEM_SAP
 #define HAS_FILESYSTEM_VTP
 #define HAS_FILESYSTEM_HTSP
-
-#ifdef HAVE_LIBNFS
-  #define HAS_FILESYSTEM_NFS
-#endif
-
 
 /**********************
  * Non-free Components
@@ -99,7 +93,6 @@
 #define HAS_LIBRTMP
 #define HAVE_LIBBLURAY
 #define HAS_ASAP_CODEC
-#define HAVE_YAJL_YAJL_VERSION_H
 #endif
 
 /*****************

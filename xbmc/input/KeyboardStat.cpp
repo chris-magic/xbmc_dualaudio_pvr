@@ -127,7 +127,7 @@ const CKey CKeyboardStat::ProcessKeyDown(XBMC_keysym& keysym)
   }
 
   // At this point update the key hold time
-  if (keysym.mod == m_lastKeysym.mod && keysym.scancode == m_lastKeysym.scancode && keysym.sym == m_lastKeysym.sym && keysym.unicode == m_lastKeysym.unicode)
+  if (memcmp(&keysym, &m_lastKeysym, sizeof(XBMC_keysym)) == 0)
   {
     held = CTimeUtils::GetFrameTime() - m_lastKeyTime;
   }

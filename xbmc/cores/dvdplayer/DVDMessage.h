@@ -33,11 +33,10 @@
 #include "system.h"
 #include "DVDDemuxers/DVDDemux.h"
 #include "DVDMessageTracker.h"
-#include "DVDResource.h"
 
 #include <assert.h>
 
-class CDVDMsg : public IDVDResourceCounted<CDVDMsg>
+class CDVDMsg
 {
 public:
   enum Message
@@ -70,8 +69,7 @@ public:
 
     PLAYER_CHANNEL_NEXT,            // switches to next playback channel
     PLAYER_CHANNEL_PREV,            // switches to previous playback channel
-    PLAYER_CHANNEL_SELECT_NUMBER,   // switches to the channel with the provided channel number
-    PLAYER_CHANNEL_SELECT,          // switches to the provided channel
+    PLAYER_CHANNEL_SELECT,          // switches to given playback channel
     PLAYER_STARTED,                 // sent whenever a sub player has finished it's first frame after open
 
     // demuxer related messages
@@ -95,6 +93,17 @@ public:
 
   CDVDMsg(Message msg)
   {
+    m_references = 1;
+    m_message = msg;
+
+#ifdef DVDDEBUG_MESSAGE_TRACKER
+    g_dvdMessageTracker.Register(this);
+#endif
+  }
+
+  CDVDMsg(Message msg, long references)
+  {
+    m_references = references;
     m_message = msg;
 
 #ifdef DVDDEBUG_MESSAGE_TRACKER
@@ -104,6 +113,8 @@ public:
 
   virtual ~CDVDMsg()
   {
+    assert(m_references == 0);
+
 #ifdef DVDDEBUG_MESSAGE_TRACKER
     g_dvdMessageTracker.UnRegister(this);
 #endif
@@ -122,12 +133,32 @@ public:
     return m_message;
   }
 
+  /**
+   * decrease the reference counter by one.
+   */
+  CDVDMsg* Acquire()
+  {
+    InterlockedIncrement(&m_references);
+    return this;
+  }
+
+  /**
+   * increase the reference counter by one.
+   */
+  long Release()
+  {
+    long count = InterlockedDecrement(&m_references);
+    if (count == 0) delete this;
+    return count;
+  }
+
   long GetNrOfReferences()
   {
-    return m_refs;
+    return m_references;
   }
 
 private:
+  long m_references;
   Message m_message;
 };
 

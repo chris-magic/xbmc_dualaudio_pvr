@@ -685,7 +685,6 @@ protected:
   void GetDetailsFromDB(std::auto_ptr<dbiplus::Dataset> &pDS, int min, int max, const SDbTableOffsets *offsets, CVideoInfoTag &details, int idxOffset = 2);
   CStdString GetValueString(const CVideoInfoTag &details, int min, int max, const SDbTableOffsets *offsets) const;
   bool GetStreamDetails(CVideoInfoTag& tag) const;
-  bool GetResumePoint(CVideoInfoTag& tag) const;
 
 private:
   virtual bool CreateTables();
@@ -727,7 +726,7 @@ private:
    */
   bool LookupByFolders(const CStdString &path, bool shows = false);
 
-  virtual int GetMinVersion() const { return 54; };
+  virtual int GetMinVersion() const { return 52; };
   virtual int GetExportVersion() const { return 1; };
   const char *GetBaseDBName() const { return "MyVideos"; };
 

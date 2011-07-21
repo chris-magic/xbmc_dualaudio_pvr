@@ -21,7 +21,6 @@
 
 #include "DVDMessageTracker.h"
 #include "DVDMessage.h"
-#include "threads/SingleLock.h"
 
 #ifdef DVDDEBUG_MESSAGE_TRACKER
 
@@ -57,14 +56,15 @@ void CDVDMessageTracker::Register(CDVDMsg* pMsg)
 {
   if (m_bInitialized)
   {
-    CSingleLock lock(m_critSection);
+    EnterCriticalSection(&m_critSection);
     m_messageList.push_back(new CDVDMessageTrackerItem(pMsg));
+    LeaveCriticalSection(&m_critSection);
   }
 }
 
 void CDVDMessageTracker::UnRegister(CDVDMsg* pMsg)
 {
-  CSingleLock lock(m_critSection);
+  EnterCriticalSection(&m_critSection);
 
   std::list<CDVDMessageTrackerItem*>::iterator iter = m_messageList.begin();
   while (iter != m_messageList.end())
@@ -79,6 +79,7 @@ void CDVDMessageTracker::UnRegister(CDVDMsg* pMsg)
     iter++;
   }
 
+  LeaveCriticalSection(&m_critSection);
 }
 
 void CDVDMessageTracker::OnStartup()
@@ -92,7 +93,7 @@ void CDVDMessageTracker::Process()
   {
     Sleep(1000);
 
-    CSingleLock lock(m_critSection);
+    EnterCriticalSection(&m_critSection);
 
     std::list<CDVDMessageTrackerItem*>::iterator iter = m_messageList.begin();
     while (!m_bStop && iter != m_messageList.end())
@@ -111,6 +112,7 @@ void CDVDMessageTracker::Process()
       iter++;
     }
 
+    LeaveCriticalSection(&m_critSection);
   }
 }
 

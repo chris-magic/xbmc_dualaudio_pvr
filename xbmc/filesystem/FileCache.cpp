@@ -243,8 +243,11 @@ void CFileCache::Process()
       CLog::Log(LOGINFO, "CFileCache::Process - Hit eof.");
       m_pCache->EndOfInput();
 
-      // The thread event will now also cause the wait of an event to return a false.
-      if (AbortableWait(m_seekEvent) == WAIT_SIGNALED)
+      // since there is no more to read - wait either for seek or close
+      // WaitForSingleObject is CThread::WaitForSingleObject that will also listen to the
+      // end thread event.
+      int nRet = CThread::WaitForSingleObject(m_seekEvent.GetHandle(), INFINITE);
+      if (nRet == WAIT_OBJECT_0)
       {
         m_pCache->ClearEndOfInput();
         m_seekEvent.Set(); // hack so that later we realize seek is needed

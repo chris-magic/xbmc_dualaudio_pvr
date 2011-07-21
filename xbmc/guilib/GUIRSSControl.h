@@ -59,18 +59,16 @@ public:
   virtual ~CGUIRSSControl(void);
   virtual CGUIRSSControl *Clone() const { return new CGUIRSSControl(*this); };
 
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
   virtual void OnFeedUpdate(const vecText &feed);
   virtual void OnFeedRelease();
   virtual bool CanFocus() const { return false; };
-  virtual CRect CalcRenderRegion() const;
 
   void SetIntervals(const std::vector<int>& vecIntervals);
   void SetUrls(const std::vector<std::string>& vecUrl, bool rtl);
 
 protected:
-  virtual bool UpdateColors();
+  virtual void UpdateColors();
 
   CCriticalSection m_criticalSection;
 

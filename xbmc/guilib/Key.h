@@ -139,7 +139,7 @@
 #define ACTION_CALIBRATE_RESET        48 // reset calibration to defaults. Can b used in: settingsScreenCalibration.xml windowid=11/settingsUICalibration.xml windowid=10
 #define ACTION_ANALOG_MOVE            49 // analog thumbstick move. Can b used in: slideshow.xml window id=2007/settingsScreenCalibration.xml windowid=11/settingsUICalibration.xml windowid=10
 #define ACTION_ROTATE_PICTURE         50 // rotate current picture during slideshow. Can b used in slideshow.xml window id=2007
-
+#define ACTION_CLOSE_DIALOG           51 // action for closing the dialog. Can b used in any dialog
 #define ACTION_SUBTITLE_DELAY_MIN     52 // Decrease subtitle/movie Delay.  Can b used in videoFullScreen.xml window id=2005
 #define ACTION_SUBTITLE_DELAY_PLUS    53 // Increase subtitle/movie Delay.  Can b used in videoFullScreen.xml window id=2005
 #define ACTION_AUDIO_DELAY_MIN        54 // Increase avsync delay.  Can b used in videoFullScreen.xml window id=2005
@@ -183,7 +183,6 @@
 #define ACTION_VOLUME_UP            88
 #define ACTION_VOLUME_DOWN          89
 #define ACTION_MUTE                 91
-#define ACTION_NAV_BACK             92
 
 #define ACTION_MOUSE_START            100
 #define ACTION_MOUSE_LEFT_CLICK       100
@@ -265,8 +264,6 @@
 #define ACTION_AUDIO_DELAY            161
 #define ACTION_SUBTITLE_DELAY         162
 
-#define ACTION_RECORD                 170
-
 #define ACTION_PASTE                  180
 #define ACTION_NEXT_CONTROL           181
 #define ACTION_PREV_CONTROL           182
@@ -296,7 +293,7 @@
 #define ACTION_VSHIFT_UP              227 // shift up video image in DVDPlayer
 #define ACTION_VSHIFT_DOWN            228 // shift down video image in DVDPlayer
 
-#define ACTION_PLAYER_PLAYPAUSE       229 // Play/pause. If playing it pauses, if paused it plays.
+#define ACTION_PLAYER_PLAYPAUSE       227 // Play/pause. If playing it pauses, if paused it plays.
 
 // The NOOP action can be specified to disable an input event. This is
 // useful in user keyboard.xml etc to disable actions specified in the
@@ -324,19 +321,18 @@
 #define WINDOW_SETTINGS_MYVIDEOS          10017
 #define WINDOW_SETTINGS_NETWORK           10018
 #define WINDOW_SETTINGS_APPEARANCE        10019
-#define WINDOW_SETTINGS_MYPVR             10020
+
+#define WINDOW_SCRIPTS                    10020 // virtual window for backward compatibility
 
 #define WINDOW_VIDEO_FILES                10024
 #define WINDOW_VIDEO_NAV                  10025
 #define WINDOW_VIDEO_PLAYLIST             10028
 
 #define WINDOW_LOGIN_SCREEN               10029
-#define WINDOW_SCRIPTS                    10030
 #define WINDOW_SETTINGS_PROFILES          10034
 
 #define WINDOW_ADDON_BROWSER              10040
 
-#define WINDOW_DIALOG_POINTER             10099
 #define WINDOW_DIALOG_YES_NO              10100
 #define WINDOW_DIALOG_PROGRESS            10101
 #define WINDOW_DIALOG_KEYBOARD            10103
@@ -378,29 +374,14 @@
 #define WINDOW_DIALOG_SLIDER              10145
 #define WINDOW_DIALOG_ADDON_INFO          10146
 #define WINDOW_DIALOG_TEXT_VIEWER         10147
-#define WINDOW_DIALOG_EXT_PROGRESS        10148
-#define WINDOW_DIALOG_PLAY_EJECT          10149
+#define WINDOW_DIALOG_PLAY_EJECT          10148
 
 #define WINDOW_MUSIC_PLAYLIST             10500
 #define WINDOW_MUSIC_FILES                10501
 #define WINDOW_MUSIC_NAV                  10502
 #define WINDOW_MUSIC_PLAYLIST_EDITOR      10503
 
-// PVR related Window and Dialog ID's
-#define WINDOW_PVR                        10600
-#define WINDOW_DIALOG_PVR_GUIDE_INFO      10601
-#define WINDOW_DIALOG_PVR_RECORDING_INFO  10602
-#define WINDOW_DIALOG_PVR_TIMER_SETTING   10603
-#define WINDOW_DIALOG_PVR_GROUP_MANAGER   10604
-#define WINDOW_DIALOG_PVR_CHANNEL_MANAGER 10605
-#define WINDOW_DIALOG_PVR_GUIDE_SEARCH    10606
-#define WINDOW_DIALOG_PVR_CHANNEL_SCAN    10607
-#define WINDOW_DIALOG_PVR_UPDATE_PROGRESS 10608
-#define WINDOW_DIALOG_PVR_OSD_CHANNELS    10609
-#define WINDOW_DIALOG_PVR_OSD_GUIDE       10610
-#define WINDOW_DIALOG_PVR_OSD_DIRECTOR    10611
-#define WINDOW_DIALOG_PVR_OSD_CUTTER      10612
-#define WINDOW_DIALOG_OSD_TELETEXT        10613
+#define WINDOW_DIALOG_OSD_TELETEXT        10600
 
 //#define WINDOW_VIRTUAL_KEYBOARD           11000
 #define WINDOW_DIALOG_SELECT              12000
@@ -428,11 +409,6 @@
 
 #define WINDOW_PYTHON_START               13000
 #define WINDOW_PYTHON_END                 13099
-
-// WINDOW_ID's from 14000 to 14099 reserved for Addons
-
-#define WINDOW_ADDON_START                14000
-#define WINDOW_ADDON_END                  14099
 
 #define ICON_TYPE_NONE          101
 #define ICON_TYPE_PROGRAMS      102

@@ -9,13 +9,13 @@
 			<include>ButtonHomeSubCommonValues</include>
 			<label>342</label>
 			<onclick>ActivateWindow(Videos,MovieTitles,return)</onclick>
-			<visible>Library.HasContent(Movies) + !Skin.HasSetting(HomeMenuNoMoviesButton)</visible>
+			<visible>Library.HasContent(Movies)</visible>
 		</control>
 		<control type="button" id="90103">
 			<include>ButtonHomeSubCommonValues</include>
 			<label>20343</label>
 			<onclick>ActivateWindow(Videos,TvShowTitles,return)</onclick>
-			<visible>Library.HasContent(TVShows) + !Skin.HasSetting(HomeMenuNoTVShowsButton)</visible>
+			<visible>Library.HasContent(TVShows)</visible>
 		</control>
 		<control type="button" id="90104">
 			<include>ButtonHomeSubCommonValues</include>
@@ -40,80 +40,6 @@
 			<onclick>ActivateWindow(Videos,Addons,return)</onclick>
 		</control>
 		<control type="image" id="90108">
-			<width>35</width>
-			<height>35</height>
-			<texture border="0,0,0,3">HomeSubEnd.png</texture>
-		</control>
-	</include>
-	<include name="HomeSubMenuMovies">
-		<control type="image" id="90161">
-			<width>35</width>
-			<height>35</height>
-			<texture border="0,0,0,3" flipx="true">HomeSubEnd.png</texture>
-		</control>
-		<control type="button" id="90162">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>31328</label>
-			<onclick>ActivateWindow(Videos,RecentlyAddedMovies,return)</onclick>
-		</control>
-		<control type="button" id="90163">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>369</label>
-			<onclick>ActivateWindow(Videos,MovieTitles,return)</onclick>
-		</control>
-		<control type="button" id="90164">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>135</label>
-			<onclick>ActivateWindow(Videos,MovieGenres,return)</onclick>
-		</control>
-		<control type="button" id="90165">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>652</label>
-			<onclick>ActivateWindow(Videos,MovieYears,return)</onclick>
-		</control>
-		<control type="button" id="90166">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>344</label>
-			<onclick>ActivateWindow(Videos,MovieActors,return)</onclick>
-		</control>
-		<control type="image" id="90167">
-			<width>35</width>
-			<height>35</height>
-			<texture border="0,0,0,3">HomeSubEnd.png</texture>
-		</control>
-	</include>
-	<include name="HomeSubMenuTVShows">
-		<control type="image" id="90171">
-			<width>35</width>
-			<height>35</height>
-			<texture border="0,0,0,3" flipx="true">HomeSubEnd.png</texture>
-		</control>
-		<control type="button" id="90172">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>31328</label>
-			<onclick>ActivateWindow(Videos,RecentlyAddedEpisodes,return)</onclick>
-		</control>
-		<control type="button" id="90173">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>369</label>
-			<onclick>ActivateWindow(Videos,TVShowTitles,return)</onclick>
-		</control>
-		<control type="button" id="90174">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>135</label>
-			<onclick>ActivateWindow(Videos,TVShowGenres,return)</onclick>
-		</control>
-		<control type="button" id="90175">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>652</label>
-			<onclick>ActivateWindow(Videos,TVShowYears,return)</onclick>
-		</control>
-		<control type="button" id="90176">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>344</label>
-			<onclick>ActivateWindow(Videos,TVShowActors,return)</onclick>
-		</control>
-		<control type="image" id="90177">
 			<width>35</width>
 			<height>35</height>
 			<texture border="0,0,0,3">HomeSubEnd.png</texture>
@@ -222,23 +148,6 @@
 		</control>
 	</include>
 	<include name="HomeSubMenuPictures">
-		<control type="image" id="90147">
-			<width>35</width>
-			<height>35</height>
-			<texture border="0,0,0,3" flipx="true">HomeSubEnd.png</texture>
-		</control>
-		<control type="button" id="90148">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>24001</label>
-			<onclick>ActivateWindow(Pictures,Addons,return)</onclick>
-		</control>
-		<control type="image" id="90149">
-			<width>35</width>
-			<height>35</height>
-			<texture border="0,0,0,3">HomeSubEnd.png</texture>
-		</control>
-	</include>
-	<include name="HomeSubMenuLiveTV">
 		<control type="image" id="90141">
 			<width>35</width>
 			<height>35</height>
@@ -246,31 +155,8 @@
 		</control>
 		<control type="button" id="90142">
 			<include>ButtonHomeSubCommonValues</include>
-			<label>19023</label>
-			<onclick>ActivateWindow(PVR)</onclick>
-			<onclick>Setfocus(32)</onclick>
-			<onclick>Setfocus(11)</onclick>
-		</control>
-		<control type="button" id="90143">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>19024</label>
-			<onclick>ActivateWindow(PVR)</onclick>
-			<onclick>Setfocus(33)</onclick>
-			<onclick>Setfocus(12)</onclick>
-		</control>
-		<control type="button" id="90144">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>19163</label>
-			<onclick>ActivateWindow(PVR)</onclick>
-			<onclick>Setfocus(34)</onclick>
-			<onclick>Setfocus(13)</onclick>
-		</control>
-		<control type="button" id="90145">
-			<include>ButtonHomeSubCommonValues</include>
-			<label>19040</label>
-			<onclick>ActivateWindow(PVR)</onclick>
-			<onclick>Setfocus(35)</onclick>
-			<onclick>Setfocus(14)</onclick>
+			<label>24001</label>
+			<onclick>ActivateWindow(Pictures,Addons,return)</onclick>
 		</control>
 		<control type="image" id="90146">
 			<width>35</width>

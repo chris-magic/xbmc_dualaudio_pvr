@@ -47,12 +47,14 @@ CCriticalSection CPluginDirectory::m_handleLock;
 
 CPluginDirectory::CPluginDirectory()
 {
+  m_fetchComplete = CreateEvent(NULL, false, false, NULL);
   m_listItems = new CFileItemList;
   m_fileResult = new CFileItem;
 }
 
 CPluginDirectory::~CPluginDirectory(void)
 {
+  CloseHandle(m_fetchComplete);
   delete m_listItems;
   delete m_fileResult;
 }
@@ -91,7 +93,7 @@ bool CPluginDirectory::StartScript(const CStdString& strPath, bool retrievingDir
 
   CStdString basePath(url.Get());
   // reset our wait event, and grab a new handle
-  m_fetchComplete.Reset();
+  ResetEvent(m_fetchComplete);
   int handle = getNewHandle(this);
 
   // clear out our status variables
@@ -205,7 +207,7 @@ void CPluginDirectory::EndOfDirectory(int handle, bool success, bool replaceList
     dir->m_listItems->AddSortMethod(SORT_METHOD_NONE, 552, LABEL_MASKS("%L", "%D"));
 
   // set the event to mark that we're done
-  dir->m_fetchComplete.Set();
+  SetEvent(dir->m_fetchComplete);
 }
 
 void CPluginDirectory::AddSortMethod(int handle, SORT_METHOD sortMethod, const CStdString &label2Mask)
@@ -452,21 +454,21 @@ bool CPluginDirectory::WaitOnScriptResult(const CStdString &scriptPath, const CS
   CLog::Log(LOGDEBUG, "%s - waiting on the %s plugin...", __FUNCTION__, scriptName.c_str());
   while (true)
   {
-    {
-      CSingleExit ex(g_graphicsContext);
-      // check if the python script is finished
-      if (m_fetchComplete.WaitMSec(20))
-      { // python has returned
-        CLog::Log(LOGDEBUG, "%s- plugin returned %s", __FUNCTION__, m_success ? "successfully" : "failure");
-        break;
-      }
+    CSingleExit ex(g_graphicsContext);
+    // check if the python script is finished
+    if (WaitForSingleObject(m_fetchComplete, 20) == WAIT_OBJECT_0)
+    { // python has returned
+      CLog::Log(LOGDEBUG, "%s- plugin returned %s", __FUNCTION__, m_success ? "successfully" : "failure");
+      break;
     }
+    ex.Restore();
+
     // check our script is still running
 #ifdef HAS_PYTHON
     if (!g_pythonParser.isRunning(g_pythonParser.getScriptId(scriptPath.c_str())))
 #endif
     { // check whether we exited normally
-      if (!m_fetchComplete.WaitMSec(0))
+      if (WaitForSingleObject(m_fetchComplete, 0) == WAIT_TIMEOUT)
       { // python didn't return correctly
         CLog::Log(LOGDEBUG, " %s - plugin exited prematurely - terminating", __FUNCTION__);
         m_success = false;
@@ -555,7 +557,7 @@ void CPluginDirectory::SetResolvedUrl(int handle, bool success, const CFileItem 
   *dir->m_fileResult = *resultItem;
 
   // set the event to mark that we're done
-  dir->m_fetchComplete.Set();
+  SetEvent(dir->m_fetchComplete);
 }
 
 CStdString CPluginDirectory::GetSetting(int handle, const CStdString &strID)

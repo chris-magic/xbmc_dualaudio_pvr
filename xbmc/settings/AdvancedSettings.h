@@ -68,7 +68,7 @@ class CAdvancedSettings
     static CAdvancedSettings* getInstance();
 
     void Initialize();
-    void AddSettingsFile(const CStdString &filename);
+
     bool Load();
     void Clear();
 
@@ -214,6 +214,7 @@ class CAdvancedSettings
 
     bool m_bVideoScannerIgnoreErrors;
 
+    bool m_bUseEvilB;
     std::vector<CStdString> m_vecTokens; // cleaning strings tied to language
     //TuxBox
     int m_iTuxBoxStreamtsPort;
@@ -229,11 +230,6 @@ class CAdvancedSettings
     int m_iTuxBoxZapstreamPort;
 
     int m_iMythMovieLength;         // minutes
-
-    int m_iEpgLingerTime;           // minutes
-    int m_iEpgUpdateCheckInterval;  // seconds
-    int m_iEpgCleanupInterval;      // seconds
-    int m_iEpgActiveTagCheckInterval; // seconds
 
     // EDL Commercial Break
     bool m_bEdlMergeShortCommBreaks;
@@ -253,7 +249,6 @@ class CAdvancedSettings
     bool m_fullScreen;
     bool m_startFullScreen;
 	bool m_showExitButton; /* Ideal for appliances to hide a 'useless' button */
-    bool m_canWindowed;
     bool m_splashImage;
     bool m_alwaysOnTop;  /* makes xbmc to run always on top .. osx/win32 only .. */
     int m_playlistRetries;
@@ -283,24 +278,11 @@ class CAdvancedSettings
     CStdString m_gpuTempCmd;
     int m_bgInfoLoaderMaxThreads;
 
-    /* PVR/TV related advanced settings */
-    int m_iPVRTimeCorrection;     /*!< @brief correct all times (epg tags, timer tags, recording tags) by this amount of minutes. defaults to 0. */
-    int m_iPVRInfoToggleInterval; /*!< @brief if there are more than 1 pvr gui info item available (e.g. multiple recordings active at the same time), use this toggle delay in milliseconds. defaults to 3000. */
-    bool m_bPVRShowEpgInfoOnEpgItemSelect; /*!< @brief when selecting an EPG fileitem, show the EPG info dialog if this setting is true. start playback on the selected channel if false */
-    int m_iPVRMinVideoCacheLevel;      /*!< @brief cache up to this level in the video buffer buffer before resuming playback if the buffers run dry */
-    int m_iPVRMinAudioCacheLevel;      /*!< @brief cache up to this level in the audio buffer before resuming playback if the buffers run dry */
-
     bool m_measureRefreshrate; //when true the videoreferenceclock will measure the refreshrate when direct3d is used
                                //otherwise it will use the windows refreshrate
 
     DatabaseSettings m_databaseMusic; // advanced music database setup
     DatabaseSettings m_databaseVideo; // advanced video database setup
-    DatabaseSettings m_databaseTV;    // advanced tv database setup
-    DatabaseSettings m_databaseEpg;   /*!< advanced EPG database setup */
-
-    bool m_guiVisualizeDirtyRegions;
-    int  m_guiAlgorithmDirtyRegions;
-    int  m_guiDirtyRegionNoFlipTimeout;
 
     unsigned int m_cacheMemBufferSize;
 
@@ -308,8 +290,6 @@ class CAdvancedSettings
     unsigned int m_jsonTcpPort;
 
     bool m_enableMultimediaKeys;
-    std::vector<CStdString> m_settingsFiles;
-    void ParseSettingsFile(const CStdString &file);
 };
 
 XBMC_GLOBAL(CAdvancedSettings,g_advancedSettings);

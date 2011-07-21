@@ -24,7 +24,6 @@
 #include <string>
 #include <set>
 #include <vector>
-#include <map>
 #include "URL.h"
 
 //forwards
@@ -37,8 +36,6 @@ public:
   class ZeroconfService
   {
     public:
-      typedef std::map<std::string, std::string> tTxtRecordMap;
-
       ZeroconfService();
       ZeroconfService(const CStdString& fcr_name, const CStdString& fcr_type, const CStdString& fcr_domain);
 
@@ -67,9 +64,6 @@ public:
 
       void SetPort(int f_port);
       int GetPort() const {return m_port;}
-    
-      void SetTxtRecords(const tTxtRecordMap& txt_records);
-      const tTxtRecordMap& GetTxtRecords() const { return m_txtrecords_map;}
       ///@}
     private:
       //3 entries below identify a service
@@ -80,9 +74,6 @@ public:
       //2 entries below store 1 ip:port pair for this service
       CStdString m_ip;
       int        m_port;
-      
-      //1 entry below stores the txt-record as a key value map for this service
-      tTxtRecordMap m_txtrecords_map;    
   };
 
   // starts browsing

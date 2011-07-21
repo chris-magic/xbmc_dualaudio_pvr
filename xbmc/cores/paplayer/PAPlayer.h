@@ -140,8 +140,10 @@ private:
   bool AddPacketsToStream(int stream, CAudioDecoder &dec);
   bool FindFreePacket(int stream, DWORD *pdwPacket );     // Looks for a free packet
   void FreeStream(int stream);
+  void FreeStreamRenderer(int stream, bool bAudio2);
 #if defined(_LINUX) || defined(_WIN32)
   void DrainStream(int stream);
+  void DrainStream(int stream, bool bAudio2);
 #endif
   bool CreateStream(int stream, unsigned int channels, unsigned int samplerate, unsigned int bitspersample, CStdString codec = "");
   void FlushStreams();
@@ -156,9 +158,17 @@ private:
 
   IAudioRenderer*   m_pAudioDecoder[2];
   float             m_latency[2];
+  unsigned int      m_pcmBufLen[2];
   unsigned char*    m_pcmBuffer[2];
   int               m_bufferPos[2];
   unsigned int      m_Chunklen[2];
+  
+  IAudioRenderer*   m_pAudioDecoder2[2];
+  float             m_latency2[2];
+  unsigned int      m_pcmBufLen2[2];
+  unsigned char*    m_pcmBuffer2[2];
+  int               m_bufferPos2[2];
+  unsigned int      m_Chunklen2[2];
 
   unsigned int     m_SampleRate;
   unsigned int     m_Channels;
@@ -196,4 +206,3 @@ private:
   short            m_visBuffer[PACKET_SIZE+2];
 
 };
-

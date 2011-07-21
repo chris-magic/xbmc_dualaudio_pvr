@@ -53,8 +53,7 @@ CGUIDialogSmartPlaylistRule::~CGUIDialogSmartPlaylistRule()
 
 bool CGUIDialogSmartPlaylistRule::OnAction(const CAction &action)
 {
-  if (action.GetID() == ACTION_PREVIOUS_MENU ||
-      action.GetID() == ACTION_NAV_BACK)
+  if (action.GetID() == ACTION_PREVIOUS_MENU)
     m_cancelled = true;
   return CGUIDialog::OnAction(action);
 }

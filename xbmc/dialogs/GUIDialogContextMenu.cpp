@@ -43,7 +43,6 @@
 #include "guilib/LocalizeStrings.h"
 #include "TextureCache.h"
 #include "video/windows/GUIWindowVideoBase.h"
-#include "ThumbnailCache.h"
 
 #ifdef _WIN32
 #include "WIN32Util.h"
@@ -466,7 +465,7 @@ bool CGUIDialogContextMenu::OnContextButton(const CStdString &type, const CFileI
         {
           cachedThumb = item->m_strPath;
           URIUtils::RemoveSlashAtEnd(cachedThumb);
-          cachedThumb = CThumbnailCache::GetMusicThumb(cachedThumb);
+          cachedThumb = CUtil::GetCachedMusicThumb(cachedThumb);
         }
         else if (type == "video")
           cachedThumb = item->GetCachedVideoThumb();

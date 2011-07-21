@@ -23,6 +23,7 @@
 #include "tinyXML/tinyxml.h"
 #include "filesystem/File.h"
 #include "AddonDatabase.h"
+#include "Application.h"
 #include "settings/Settings.h"
 #include "FileItem.h"
 #include "utils/JobManager.h"
@@ -30,7 +31,6 @@
 #include "utils/log.h"
 #include "utils/URIUtils.h"
 #include "dialogs/GUIDialogYesNo.h"
-#include "dialogs/GUIDialogKaiToast.h"
 
 using namespace XFILE;
 using namespace ADDON;
@@ -212,9 +212,9 @@ bool CRepositoryUpdateJob::DoWork()
       }
       else if (g_settings.m_bAddonNotifications)
       {
-        CGUIDialogKaiToast::QueueNotification(addon->Icon(),
-                                              g_localizeStrings.Get(24061),
-                                              addon->Name(),TOAST_DISPLAY_TIME,false,TOAST_DISPLAY_TIME);
+        g_application.m_guiDialogKaiToast.QueueNotification(addon->Icon(),
+                                                            g_localizeStrings.Get(24061),
+                                                            addon->Name(),TOAST_DISPLAY_TIME,false,TOAST_DISPLAY_TIME);
       }
     }
     if (!addons[i]->Props().broken.IsEmpty())

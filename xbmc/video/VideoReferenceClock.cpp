@@ -151,7 +151,6 @@ void CVideoReferenceClock::Process()
     CSingleLock SingleLock(m_CritSection);
     Now = CurrentHostCounter();
     m_CurrTime = Now + m_ClockOffset; //add the clock offset from the previous time we stopped
-    m_LastIntTime = m_CurrTime;
     m_CurrTimeFract = 0.0;
     m_ClockSpeed = 1.0;
     m_TotalMissedVblanks = 0;
@@ -906,7 +905,7 @@ void CVideoReferenceClock::UpdateClock(int NrVBlanks, bool CheckMissed)
 
   if (NrVBlanks > 0) //update the clock with the adjusted frequency if we have any vblanks
   {
-    double increment = UpdateInterval() * NrVBlanks;
+    double increment = (double)NrVBlanks * m_ClockSpeed * m_fineadjust / m_RefreshRate * m_SystemFrequency;
     double integer   = floor(increment);
     m_CurrTime      += (int64_t)(integer + 0.5); //make sure it gets correctly converted to int
 
@@ -918,13 +917,8 @@ void CVideoReferenceClock::UpdateClock(int NrVBlanks, bool CheckMissed)
   }
 }
 
-double CVideoReferenceClock::UpdateInterval()
-{
-  return m_ClockSpeed * m_fineadjust / (double)m_RefreshRate * (double)m_SystemFrequency;
-}
-
 //called from dvdclock to get the time
-int64_t CVideoReferenceClock::GetTime(bool interpolated /* = true*/)
+int64_t CVideoReferenceClock::GetTime()
 {
   CSingleLock SingleLock(m_CritSection);
 
@@ -943,24 +937,7 @@ int64_t CVideoReferenceClock::GetTime(bool interpolated /* = true*/)
       NextVblank = TimeOfNextVblank(); //get time when the next vblank should happen
     }
 
-    if (interpolated)
-    {
-      //interpolate from the last time the clock was updated
-      double elapsed = (double)(Now - m_VblankTime) * m_ClockSpeed * m_fineadjust;
-      //don't interpolate more than 2 vblank periods
-      elapsed = min(elapsed, UpdateInterval() * 2.0);
-
-      //make sure the clock doesn't go backwards
-      int64_t intTime = m_CurrTime + (int64_t)elapsed;
-      if (intTime > m_LastIntTime)
-        m_LastIntTime = intTime;
-
-      return m_LastIntTime;
-    }
-    else
-    {
-      return m_CurrTime;
-    }
+    return m_CurrTime;
   }
   else
   {

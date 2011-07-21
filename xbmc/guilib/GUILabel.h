@@ -44,17 +44,13 @@ public:
     scrollSpeed = CScrollInfo::defaultSpeed;
     scrollSuffix = " | ";
   };
-  bool UpdateColors()
+  void UpdateColors()
   {
-    bool changed = false;
-
-    changed |= textColor.Update();
-    changed |= shadowColor.Update();
-    changed |= selectedColor.Update();
-    changed |= disabledColor.Update();
-    changed |= focusedColor.Update();
-
-    return changed;
+    textColor.Update();
+    shadowColor.Update();
+    selectedColor.Update();
+    disabledColor.Update();
+    focusedColor.Update();
   };
   
   CGUIInfoColor textColor;
@@ -95,11 +91,6 @@ public:
   CGUILabel(float posX, float posY, float width, float height, const CLabelInfo& labelInfo, OVER_FLOW overflow = OVER_FLOW_TRUNCATE);
   virtual ~CGUILabel(void);
 
-  /*! \brief Process the label
-   \return bool stating if process caused control to change
-   */
-  bool Process(unsigned int currentTime);
-
   /*! \brief Render the label on screen
    */
   void Render();
@@ -108,29 +99,29 @@ public:
    Sets the maximal size and positioning that the label may render in.  Note that <textwidth> can override
    this, and <textoffsetx> and <textoffsety> may also allow the label to be moved outside this rectangle.
    */
-  bool SetMaxRect(float x, float y, float w, float h);
+  void SetMaxRect(float x, float y, float w, float h);
 
-  bool SetAlign(uint32_t align);
+  void SetAlign(uint32_t align);
   
   /*! \brief Set the text to be displayed in the label
    Updates the label control and recomputes final position and size
    \param text CStdString to set as this labels text
    \sa SetTextW
    */
-  bool SetText(const CStdString &label);
+  void SetText(const CStdString &label);
 
   /*! \brief Set the text to be displayed in the label
    Updates the label control and recomputes final position and size
    \param text CStdStringW to set as this labels text
    \sa SetText
    */
-  bool SetTextW(const CStdStringW &label);
+  void SetTextW(const CStdStringW &label);
   
   /*! \brief Set the color to use for the label
    Sets the color to be used for this label.  Takes effect at the next render
    \param color color to be used for the label
    */
-  bool SetColor(COLOR color);
+  void SetColor(COLOR color);
 
   /*! \brief Set the final layout of the current text
    Overrides the calculated layout of the current text, forcing a particular size and position
@@ -142,7 +133,7 @@ public:
   /*! \brief Set whether or not this label control should scroll
    \param scrolling true if this label should scroll.
    */
-  bool SetScrolling(bool scrolling);
+  void SetScrolling(bool scrolling);
 
   /*! \brief Set this label invalid.  Forces an update of the control
    */
@@ -150,7 +141,7 @@ public:
   
   /*! \brief Update this labels colors
    */
-  bool UpdateColors();
+  void UpdateColors();
   
   /*! \brief Returns the precalculated final layout of the current text
    \return CRect containing the extents of the current text
@@ -201,7 +192,7 @@ public:
    \param label1 First label to check
    \param label2 Second label to check
    */
-  static bool CheckAndCorrectOverlap(CGUILabel &label1, CGUILabel &label2);
+  static void CheckAndCorrectOverlap(CGUILabel &label1, CGUILabel &label2);
   
 protected:
   color_t GetColor() const;

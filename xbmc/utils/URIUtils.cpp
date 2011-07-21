@@ -662,45 +662,26 @@ bool URIUtils::IsHTSP(const CStdString& strFile)
   return strFile.Left(5).Equals("htsp:");
 }
 
-bool URIUtils::IsPVRRecording(const CStdString& strFile)
-{
-  CStdString strFileWithoutSlash(strFile);
-  RemoveSlashAtEnd(strFileWithoutSlash);
-
-  return strFileWithoutSlash.Right(4).Equals(".pvr") &&
-      strFile.Left(16).Equals("pvr://recordings");
-}
-
 bool URIUtils::IsLiveTV(const CStdString& strFile)
 {
-  CStdString strFileWithoutSlash(strFile);
-  RemoveSlashAtEnd(strFileWithoutSlash);
+  if(IsTuxBox(strFile)
+  || IsVTP(strFile)
+  || IsHDHomeRun(strFile)
+  || IsSlingbox(strFile)
+  || IsHTSP(strFile)
+  || strFile.Left(4).Equals("sap:"))
+    return true;
 
-  return IsTuxBox(strFileWithoutSlash) ||
-      IsVTP(strFileWithoutSlash) ||
-      IsHDHomeRun(strFileWithoutSlash) ||
-      IsSlingbox(strFileWithoutSlash) ||
-      IsHTSP(strFileWithoutSlash) ||
-      strFileWithoutSlash.Left(4).Equals("sap:") ||
-      (strFileWithoutSlash.Right(4).Equals(".pvr") && !strFileWithoutSlash.Left(16).Equals("pvr://recordings")) ||
-      (IsMythTV(strFileWithoutSlash) && CMythDirectory::IsLiveTV(strFileWithoutSlash));
+  if (IsMythTV(strFile) && CMythDirectory::IsLiveTV(strFile))
+    return true;
+
+  return false;
 }
 
 bool URIUtils::IsMusicDb(const CStdString& strFile)
 {
   return strFile.Left(8).Equals("musicdb:");
 }
-
-bool URIUtils::IsNfs(const CStdString& strFile)
-{
-  CStdString strFile2(strFile);
-  
-  if (IsStack(strFile))
-    strFile2 = CStackDirectory::GetFirstStackedFile(strFile);
-  
-  return strFile2.Left(4).Equals("nfs:");
-}
-
 
 bool URIUtils::IsVideoDb(const CStdString& strFile)
 {

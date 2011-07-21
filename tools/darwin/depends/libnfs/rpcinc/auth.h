@@ -123,7 +123,7 @@ struct opaque_auth {
 /*
  * Auth handle, interface to client side authenticators.
  */
-struct AUTH{
+typedef struct {
 	struct	opaque_auth	ah_cred;
 	struct	opaque_auth	ah_verf;
 	union	des_block	ah_key;
@@ -144,8 +144,7 @@ struct AUTH{
 #endif
 	} *ah_ops;
 	caddr_t ah_private;
-};
-typedef struct AUTH AUTH;
+} AUTH;
 
 
 /*

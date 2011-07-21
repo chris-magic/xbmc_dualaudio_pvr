@@ -72,11 +72,6 @@ bool CHALPowerSyscall::CanReboot()
   return m_CanReboot;
 }
 
-int CHALPowerSyscall::BatteryLevel()
-{
-  return 0;
-}
-
 bool CHALPowerSyscall::doPowerCall(const char *powerstate)
 {
   DBusMessage* msg;

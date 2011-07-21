@@ -320,7 +320,6 @@ bool CMythDirectory::GetRecordings(const CStdString& base, CFileItemList &items,
       m_dll->ref_release(program);
     }
   }
-  m_dll->ref_release(list);
 
   /*
    * Don't sort by name for TV_SHOWS as they all have the same name, so only date sort is useful.
@@ -393,7 +392,6 @@ bool CMythDirectory::GetTvShowFolders(const CStdString& base, CFileItemList &ite
     }
 
   }
-  m_dll->ref_release(list);
 
   if (g_guiSettings.GetBool("filelists.ignorethewhensorting"))
     items.AddSortMethod(SORT_METHOD_LABEL_IGNORE_THE, 551 /* Name */, LABEL_MASKS("", "", "%L", "%J"));

@@ -55,8 +55,6 @@ UIWindow *m_window;
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application 
 {
-  [[UIDevice currentDevice] setBatteryMonitoringEnabled:YES];
-  
   m_window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
 
   /* Turn off autoresizing */

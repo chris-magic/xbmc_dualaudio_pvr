@@ -25,8 +25,6 @@
 
 #include "system.h"
 
-#include "threads/SingleLock.h"
-
 class CDVDMessageQueue;
 
 typedef struct stProcessPerformance
@@ -45,20 +43,23 @@ public:
   bool Initialize();
   void DeInitialize();
 
-  void EnableAudioQueue(CDVDMessageQueue* pQueue)   { CSingleLock lock(m_critSection); m_pAudioQueue = pQueue; }
-  void DisableAudioQueue()                          { CSingleLock lock(m_critSection); m_pAudioQueue = NULL;  }
+  void Lock()                                       { EnterCriticalSection(&m_critSection); }
+  void Unlock()                                     { LeaveCriticalSection(&m_critSection); }
 
-  void EnableVideoQueue(CDVDMessageQueue* pQueue)   { CSingleLock lock(m_critSection); m_pVideoQueue = pQueue;  }
-  void DisableVideoQueue()                          { CSingleLock lock(m_critSection); m_pVideoQueue = NULL;  }
+  void EnableAudioQueue(CDVDMessageQueue* pQueue)   { Lock(); m_pAudioQueue = pQueue; Unlock(); }
+  void DisableAudioQueue()                          { Lock(); m_pAudioQueue = NULL; Unlock(); }
 
-  void EnableVideoDecodePerformance(HANDLE hThread) { CSingleLock lock(m_critSection); m_videoDecodePerformance.hThread = hThread;  }
-  void DisableVideoDecodePerformance()              { CSingleLock lock(m_critSection); m_videoDecodePerformance.hThread = NULL;  }
+  void EnableVideoQueue(CDVDMessageQueue* pQueue)   { Lock(); m_pVideoQueue = pQueue; Unlock(); }
+  void DisableVideoQueue()                          { Lock(); m_pVideoQueue = NULL; Unlock(); }
 
-  void EnableAudioDecodePerformance(HANDLE hThread) { CSingleLock lock(m_critSection); m_audioDecodePerformance.hThread = hThread;  }
-  void DisableAudioDecodePerformance()              { CSingleLock lock(m_critSection); m_audioDecodePerformance.hThread = NULL;  }
+  void EnableVideoDecodePerformance(HANDLE hThread) { Lock(); m_videoDecodePerformance.hThread = hThread; Unlock(); }
+  void DisableVideoDecodePerformance()              { Lock(); m_videoDecodePerformance.hThread = NULL; Unlock(); }
 
-  void EnableMainPerformance(HANDLE hThread)        { CSingleLock lock(m_critSection); m_mainPerformance.hThread = hThread;  }
-  void DisableMainPerformance()                     { CSingleLock lock(m_critSection); m_mainPerformance.hThread = NULL;  }
+  void EnableAudioDecodePerformance(HANDLE hThread) { Lock(); m_audioDecodePerformance.hThread = hThread; Unlock(); }
+  void DisableAudioDecodePerformance()              { Lock(); m_audioDecodePerformance.hThread = NULL; Unlock(); }
+
+  void EnableMainPerformance(HANDLE hThread)        { Lock(); m_mainPerformance.hThread = hThread; Unlock(); }
+  void DisableMainPerformance()                     { Lock(); m_mainPerformance.hThread = NULL; Unlock(); }
 
   CDVDMessageQueue*         m_pAudioQueue;
   CDVDMessageQueue*         m_pVideoQueue;
@@ -68,7 +69,7 @@ public:
   ProcessPerformance        m_mainPerformance;
 
 private:
-  CCriticalSection m_critSection;
+  CRITICAL_SECTION m_critSection;
 };
 
 extern CDVDPerformanceCounter g_dvdPerformanceCounter;

@@ -279,16 +279,6 @@ bool CWIN32Util::PowerManagement(PowerState State)
 #endif
 }
 
-int CWIN32Util::BatteryLevel()
-{
-  SYSTEM_POWER_STATUS SystemPowerStatus;
-
-  if (GetSystemPowerStatus(&SystemPowerStatus) && SystemPowerStatus.BatteryLifePercent != 255)
-      return SystemPowerStatus.BatteryLifePercent;
-
-  return 0;
-}
-
 bool CWIN32Util::XBMCShellExecute(const CStdString &strPath, bool bWaitForScriptExit)
 {
   CStdString strCommand = strPath;

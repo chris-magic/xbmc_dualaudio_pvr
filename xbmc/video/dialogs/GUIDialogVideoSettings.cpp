@@ -33,10 +33,8 @@
 #include "dialogs/GUIDialogYesNo.h"
 #include "settings/Settings.h"
 #include "addons/Skin.h"
-#include "pvr/PVRManager.h"
 
 using namespace std;
-using namespace PVR;
 
 CGUIDialogVideoSettings::CGUIDialogVideoSettings(void)
     : CGUIDialogSettings(WINDOW_DIALOG_VIDEO_OSD_SETTINGS, "VideoOSDSettings.xml")
@@ -85,7 +83,6 @@ void CGUIDialogVideoSettings::CreateSettings()
     entries.push_back(make_pair(VS_INTERLACEMETHOD_RENDER_BOB_INVERTED  , 16022));
     entries.push_back(make_pair(VS_INTERLACEMETHOD_RENDER_BOB           , 16021));
     entries.push_back(make_pair(VS_INTERLACEMETHOD_DEINTERLACE          , 16020));
-    entries.push_back(make_pair(VS_INTERLACEMETHOD_DEINTERLACE_HALF     , 16036));
     entries.push_back(make_pair(VS_INTERLACEMETHOD_INVERSE_TELECINE     , 16314));
     entries.push_back(make_pair(VS_INTERLACEMETHOD_VDPAU_TEMPORAL_SPATIAL     , 16311));
     entries.push_back(make_pair(VS_INTERLACEMETHOD_VDPAU_TEMPORAL             , 16310));
@@ -93,7 +90,6 @@ void CGUIDialogVideoSettings::CreateSettings()
     entries.push_back(make_pair(VS_INTERLACEMETHOD_VDPAU_TEMPORAL_SPATIAL_HALF, 16318));
     entries.push_back(make_pair(VS_INTERLACEMETHOD_VDPAU_TEMPORAL_HALF        , 16317));
     entries.push_back(make_pair(VS_INTERLACEMETHOD_VDPAU_INVERSE_TELECINE     , 16314));
-    entries.push_back(make_pair(VS_INTERLACEMETHOD_AUTO_ION             , 16320));
 
     /* remove unsupported methods */
     for(vector<pair<int, int> >::iterator it = entries.begin(); it != entries.end();)
@@ -216,9 +212,6 @@ void CGUIDialogVideoSettings::OnSettingChanged(SettingInfo &setting)
       g_settings.Save();
     }
   }
-
-  if (g_PVRManager.IsPlayingRadio() || g_PVRManager.IsPlayingTV())
-    g_PVRManager.TriggerSaveChannelSettings();
 }
 
 CStdString CGUIDialogVideoSettings::FormatInteger(float value, float minimum)

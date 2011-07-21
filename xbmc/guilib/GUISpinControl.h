@@ -49,7 +49,6 @@ public:
   virtual ~CGUISpinControl(void);
   virtual CGUISpinControl *Clone() const { return new CGUISpinControl(*this); };
 
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
   virtual bool OnAction(const CAction &action);
   virtual void OnLeft();
@@ -90,7 +89,7 @@ public:
 
 protected:
   virtual EVENT_RESULT OnMouseEvent(const CPoint &point, const CMouseEvent &event);
-  virtual bool UpdateColors();
+  virtual void UpdateColors();
   /*! \brief Render the spinner text
    \param posX position of the left edge of the text
    \param width width of the text

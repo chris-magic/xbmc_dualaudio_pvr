@@ -149,7 +149,7 @@ public:
 
   const CAnimation &operator=(const CAnimation &src);
 
-  static CAnimation CreateFader(float start, float end, unsigned int delay, unsigned int length, ANIMATION_TYPE type = ANIM_TYPE_NONE);
+  static CAnimation *CreateFader(float start, float end, unsigned int delay, unsigned int length);
 
   void Create(const TiXmlElement *node, const CRect &rect);
 

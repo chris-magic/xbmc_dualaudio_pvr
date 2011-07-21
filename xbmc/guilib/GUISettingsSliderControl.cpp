@@ -34,11 +34,6 @@ CGUISettingsSliderControl::~CGUISettingsSliderControl(void)
 {
 }
 
-void CGUISettingsSliderControl::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
-{
-  m_buttonControl.Process(currentTime, dirtyregions);
-  CGUISliderControl::Process(currentTime, dirtyregions);
-}
 
 void CGUISettingsSliderControl::Render()
 {
@@ -121,10 +116,8 @@ CStdString CGUISettingsSliderControl::GetDescription() const
   return m_buttonControl.GetDescription() + " " + CGUISliderControl::GetDescription();
 }
 
-bool CGUISettingsSliderControl::UpdateColors()
+void CGUISettingsSliderControl::UpdateColors()
 {
-  bool changed = CGUISliderControl::UpdateColors();
-  changed |= m_buttonControl.UpdateColors();
-
-  return changed;
+  m_buttonControl.UpdateColors();
+  CGUISliderControl::UpdateColors();
 }

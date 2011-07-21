@@ -128,17 +128,20 @@ CDVDPerformanceCounter::CDVDPerformanceCounter()
   memset(&m_audioDecodePerformance, 0, sizeof(m_audioDecodePerformance)); // audio decoding + output to audio device
   memset(&m_mainPerformance,        0, sizeof(m_mainPerformance));        // reading files, demuxing, decoding of subtitles + menu overlays
 
+  InitializeCriticalSection(&m_critSection);
+
   Initialize();
 }
 
 CDVDPerformanceCounter::~CDVDPerformanceCounter()
 {
   DeInitialize();
+  DeleteCriticalSection(&m_critSection);
 }
 
 bool CDVDPerformanceCounter::Initialize()
 {
-  CSingleLock lock(m_critSection);
+  Lock();
 
 #ifdef DVDDEBUG_WITH_PERFORMANCE_COUNTER
 
@@ -150,11 +153,15 @@ bool CDVDPerformanceCounter::Initialize()
 
 #endif
 
+  Unlock();
+
   return true;
 }
 
 void CDVDPerformanceCounter::DeInitialize()
 {
+  Lock();
 
+  Unlock();
 }
 

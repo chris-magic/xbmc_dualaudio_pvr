@@ -206,6 +206,8 @@ void CAdvancedSettings::Initialize()
   m_bVideoLibraryImportWatchedState = false;
   m_bVideoScannerIgnoreErrors = false;
 
+  m_bUseEvilB = true;
+
   m_iTuxBoxStreamtsPort = 31339;
   m_bTuxBoxAudioChannelSelection = false;
   m_bTuxBoxSubMenuSelection = false;
@@ -219,11 +221,6 @@ void CAdvancedSettings::Initialize()
   m_iTuxBoxZapstreamPort = 31344;
 
   m_iMythMovieLength = 0; // 0 == Off
-
-  m_iEpgLingerTime = 60;           /* keep 1 hour by default */
-  m_iEpgUpdateCheckInterval = 300; /* check if tables need to be updated every 5 minutes */
-  m_iEpgCleanupInterval = 900;     /* remove old entries from the EPG every 15 minutes */
-  m_iEpgActiveTagCheckInterval = 60; /* check for updated active tags every minute */
 
   m_bEdlMergeShortCommBreaks = false;      // Off by default
   m_iEdlMaxCommBreakLength = 8 * 30 + 10;  // Just over 8 * 30 second commercial break.
@@ -273,12 +270,6 @@ void CAdvancedSettings::Initialize()
 
   m_bgInfoLoaderMaxThreads = 5;
 
-  m_iPVRTimeCorrection             = 0;
-  m_iPVRInfoToggleInterval         = 3000;
-  m_bPVRShowEpgInfoOnEpgItemSelect = true;
-  m_iPVRMinVideoCacheLevel         = 5;
-  m_iPVRMinAudioCacheLevel         = 5;
-
   m_measureRefreshrate = false;
 
   m_cacheMemBufferSize = 1024 * 1024 * 20;
@@ -287,11 +278,6 @@ void CAdvancedSettings::Initialize()
   m_jsonTcpPort = 9090;
 
   m_enableMultimediaKeys = false;
-
-  m_canWindowed = true;
-  m_guiVisualizeDirtyRegions = false;
-  m_guiAlgorithmDirtyRegions = 0;
-  m_guiDirtyRegionNoFlipTimeout = -1;
 }
 
 bool CAdvancedSettings::Load()
@@ -300,44 +286,37 @@ bool CAdvancedSettings::Load()
   //       it should instead use the versions of GetString/Integer/Float that
   //       don't take defaults in.  Defaults are set in the constructor above
   Initialize(); // In case of profile switch.
-  ParseSettingsFile("special://xbmc/system/advancedsettings.xml");
-  for (unsigned int i = 0; i < m_settingsFiles.size(); i++)
-    ParseSettingsFile(m_settingsFiles[i]);
-  ParseSettingsFile(g_settings.GetUserDataItem("advancedsettings.xml"));
-  return true;
-}
-
-void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
-{
+  CStdString advancedSettingsXML;
+  advancedSettingsXML  = g_settings.GetUserDataItem("advancedsettings.xml");
   TiXmlDocument advancedXML;
-  if (!CFile::Exists(file))
-  {
-    CLog::Log(LOGNOTICE, "No settings file to load to load (%s)", file.c_str());
-    return;
+  if (!CFile::Exists(advancedSettingsXML))
+  { // tell the user it doesn't exist
+    CLog::Log(LOGNOTICE, "No advancedsettings.xml to load (%s)", advancedSettingsXML.c_str());
+    return false;
   }
 
-  if (!advancedXML.LoadFile(file))
+  if (!advancedXML.LoadFile(advancedSettingsXML))
   {
-    CLog::Log(LOGERROR, "Error loading %s, Line %d\n%s", file.c_str(), advancedXML.ErrorRow(), advancedXML.ErrorDesc());
-    return;
+    CLog::Log(LOGERROR, "Error loading %s, Line %d\n%s", advancedSettingsXML.c_str(), advancedXML.ErrorRow(), advancedXML.ErrorDesc());
+    return false;
   }
 
   TiXmlElement *pRootElement = advancedXML.RootElement();
   if (!pRootElement || strcmpi(pRootElement->Value(),"advancedsettings") != 0)
   {
-    CLog::Log(LOGERROR, "Error loading %s, no <advancedsettings> node", file.c_str());
-    return;
+    CLog::Log(LOGERROR, "Error loading %s, no <advancedsettings> node", advancedSettingsXML.c_str());
+    return false;
   }
 
   // succeeded - tell the user it worked
-  CLog::Log(LOGNOTICE, "Loaded settings file from %s", file.c_str());
+  CLog::Log(LOGNOTICE, "Loaded advancedsettings.xml from %s", advancedSettingsXML.c_str());
 
   // Dump contents of AS.xml to debug log
   TiXmlPrinter printer;
   printer.SetLineBreak("\n");
   printer.SetIndent("  ");
   advancedXML.Accept(&printer);
-  CLog::Log(LOGNOTICE, "Contents of %s are...\n%s", file.c_str(), printer.CStr());
+  CLog::Log(LOGNOTICE, "Contents of %s are...\n%s", advancedSettingsXML.c_str(), printer.CStr());
 
   TiXmlElement *pElement = pRootElement->FirstChildElement("audio");
   if (pElement)
@@ -659,13 +638,13 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
 #endif
   XMLUtils::GetBoolean(pRootElement, "splash", m_splashImage);
   XMLUtils::GetBoolean(pRootElement, "showexitbutton", m_showExitButton);
-  XMLUtils::GetBoolean(pRootElement, "canwindowed", m_canWindowed);
 
   XMLUtils::GetInt(pRootElement, "songinfoduration", m_songInfoDuration, 0, INT_MAX);
   XMLUtils::GetInt(pRootElement, "busydialogdelay", m_busyDialogDelay, 0, 5000);
   XMLUtils::GetInt(pRootElement, "playlistretries", m_playlistRetries, -1, 5000);
   XMLUtils::GetInt(pRootElement, "playlisttimeout", m_playlistTimeout, 0, 5000);
 
+  XMLUtils::GetBoolean(pRootElement,"rootovershoot",m_bUseEvilB);
   XMLUtils::GetBoolean(pRootElement,"glrectanglehack", m_GLRectangleHack);
   XMLUtils::GetInt(pRootElement,"skiploopfilter", m_iSkipLoopFilter, -16, 48);
   XMLUtils::GetFloat(pRootElement, "forcedswaptime", m_ForcedSwapTime, 0.0, 100.0);
@@ -699,16 +678,6 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
   if (pElement)
   {
     XMLUtils::GetInt(pElement, "movielength", m_iMythMovieLength);
-  }
-
-  // EPG
-  pElement = pRootElement->FirstChildElement("epg");
-  if (pElement)
-  {
-    XMLUtils::GetInt(pElement, "lingertime", m_iEpgLingerTime);
-    XMLUtils::GetInt(pElement, "updatecheckinterval", m_iEpgUpdateCheckInterval);
-    XMLUtils::GetInt(pElement, "cleanupinterval", m_iEpgCleanupInterval);
-    XMLUtils::GetInt(pElement, "activetagcheckinterval", m_iEpgActiveTagCheckInterval);
   }
 
   // EDL commercial break handling
@@ -882,16 +851,6 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
   XMLUtils::GetInt(pRootElement, "bginfoloadermaxthreads", m_bgInfoLoaderMaxThreads);
   m_bgInfoLoaderMaxThreads = std::max(1, m_bgInfoLoaderMaxThreads);
 
-  TiXmlElement *pPVR = pRootElement->FirstChildElement("pvr");
-  if (pPVR)
-  {
-    XMLUtils::GetInt(pPVR, "timecorrection", m_iPVRTimeCorrection, 0, 1440);
-    XMLUtils::GetInt(pPVR, "infotoggleinterval", m_iPVRInfoToggleInterval, 0, 30000);
-    XMLUtils::GetBoolean(pPVR, "showepginfoonselect", m_bPVRShowEpgInfoOnEpgItemSelect);
-    XMLUtils::GetInt(pPVR, "minvideocachelevel", m_iPVRMinVideoCacheLevel, 0, 100);
-    XMLUtils::GetInt(pPVR, "minaudiocachelevel", m_iPVRMinAudioCacheLevel, 0, 100);
-  }
-
   XMLUtils::GetBoolean(pRootElement, "measurerefreshrate", m_measureRefreshrate);
 
   TiXmlElement* pDatabase = pRootElement->FirstChildElement("videodatabase");
@@ -917,44 +876,16 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
     XMLUtils::GetString(pDatabase, "name", m_databaseMusic.name);
   }
 
-  pDatabase = pRootElement->FirstChildElement("tvdatabase");
-  if (pDatabase)
-  {
-    XMLUtils::GetString(pDatabase, "type", m_databaseTV.type);
-    XMLUtils::GetString(pDatabase, "host", m_databaseTV.host);
-    XMLUtils::GetString(pDatabase, "port", m_databaseTV.port);
-    XMLUtils::GetString(pDatabase, "user", m_databaseTV.user);
-    XMLUtils::GetString(pDatabase, "pass", m_databaseTV.pass);
-    XMLUtils::GetString(pDatabase, "name", m_databaseTV.name);
-  }
-
-  pDatabase = pRootElement->FirstChildElement("epgdatabase");
-  if (pDatabase)
-  {
-    XMLUtils::GetString(pDatabase, "type", m_databaseEpg.type);
-    XMLUtils::GetString(pDatabase, "host", m_databaseEpg.host);
-    XMLUtils::GetString(pDatabase, "port", m_databaseEpg.port);
-    XMLUtils::GetString(pDatabase, "user", m_databaseEpg.user);
-    XMLUtils::GetString(pDatabase, "pass", m_databaseEpg.pass);
-    XMLUtils::GetString(pDatabase, "name", m_databaseEpg.name);
-  }
-
   pElement = pRootElement->FirstChildElement("enablemultimediakeys");
   if (pElement)
   {
     XMLUtils::GetBoolean(pRootElement, "enablemultimediakeys", m_enableMultimediaKeys);
   }
-  
-  pElement = pRootElement->FirstChildElement("gui");
-  if (pElement)
-  {
-    XMLUtils::GetBoolean(pElement, "visualizedirtyregions", m_guiVisualizeDirtyRegions);
-    XMLUtils::GetInt(pElement, "algorithmdirtyregions",     m_guiAlgorithmDirtyRegions);
-    XMLUtils::GetInt(pElement, "nofliptimeout",             m_guiDirtyRegionNoFlipTimeout);
-  }
 
   // load in the GUISettings overrides:
   g_guiSettings.LoadXML(pRootElement, true);  // true to hide the settings we read in
+
+  return true;
 }
 
 void CAdvancedSettings::Clear()
@@ -1076,7 +1007,3 @@ void CAdvancedSettings::GetCustomExtensions(TiXmlElement *pRootElement, CStdStri
   }
 }
 
-void CAdvancedSettings::AddSettingsFile(const CStdString &filename)
-{
-  m_settingsFiles.push_back(filename);
-}

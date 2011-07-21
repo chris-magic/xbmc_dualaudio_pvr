@@ -30,7 +30,6 @@ SRCS=AlarmClock.cpp \
      LCDFactory.cpp \
      log.cpp \
      md5.cpp \
-     Observer.cpp \
      PCMAmplifier.cpp \
      PCMRemap.cpp \
      PerformanceSample.cpp \
@@ -45,10 +44,8 @@ SRCS=AlarmClock.cpp \
      ssrc.cpp \
      Stopwatch.cpp \
      StreamDetails.cpp \
-     StreamUtils.cpp \
      StringUtils.cpp \
      SystemInfo.cpp \
-     TextSearch.cpp \
      TimeUtils.cpp \
      TuxBoxUtil.cpp \
      URIUtils.cpp \

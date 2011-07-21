@@ -46,9 +46,6 @@
 #define ssh_session ssh_session*
 #endif
 
-//five secs timeout for SFTP
-#define SFTP_TIMEOUT 5
-
 class CSFTPSession
 {
 public:

@@ -29,8 +29,8 @@
 
 #include "PlatformDefs.h"
 #include "XHandlePublic.h"
-#include "threads/Condition.h"
-#include "threads/CriticalSection.h"
+#include "threads/Semaphore.hpp"
+#include "threads/XBMC_mutex.h"
 #include "utils/StdString.h"
 
 struct CXHandle {
@@ -47,9 +47,10 @@ public:
   inline HandleType GetType() { return m_type; }
   void ChangeType(HandleType newType);
 
+  CSemaphore            *m_pSem;
   ThreadIdentifier      m_hThread;
   bool                  m_threadValid;
-  XbmcThreads::ConditionVariable     *m_hCond;
+  SDL_cond              *m_hCond;
   std::list<CXHandle*>  m_hParents;
 
 #ifdef __APPLE__
@@ -60,7 +61,7 @@ public:
 #endif
 
   // simulate mutex and critical section
-  CCriticalSection *m_hMutex;
+  SDL_mutex *m_hMutex;
   int       RecursionCount;  // for mutex - for compatibility with WIN32 critical section
   pthread_t OwningThread;
   int       fd;
@@ -73,7 +74,7 @@ public:
   bool             m_bCDROM;
   bool             m_bEventSet;
   int              m_nRefCount;
-  CCriticalSection *m_internalLock;
+  SDL_mutex *m_internalLock;
 
   static void DumpObjectTracker();
 

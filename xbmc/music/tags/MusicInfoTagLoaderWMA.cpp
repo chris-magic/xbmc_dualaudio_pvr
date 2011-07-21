@@ -28,7 +28,6 @@
 #include "utils/AutoPtrHandle.h"
 #include "utils/CharsetConverter.h"
 #include "utils/log.h"
-#include "ThumbnailCache.h"
 
 using namespace AUTOPTR;
 using namespace XFILE;
@@ -517,9 +516,9 @@ void CMusicInfoTagLoaderWMA::SetTagValueBinary(const CStdString& strFrameName, c
       // other non-tagged files don't get this album image
       CStdString strCoverArt;
       if (!tag.GetAlbum().IsEmpty() && (!tag.GetAlbumArtist().IsEmpty() || !tag.GetArtist().IsEmpty()))
-        strCoverArt = CThumbnailCache::GetAlbumThumb(&tag);
+        strCoverArt = CUtil::GetCachedAlbumThumb(tag.GetAlbum(), tag.GetAlbumArtist().IsEmpty() ? tag.GetArtist() : tag.GetAlbumArtist());
       else
-        strCoverArt = CThumbnailCache::GetMusicThumb(tag.GetURL());
+        strCoverArt = CUtil::GetCachedMusicThumb(tag.GetURL());
       if (!CUtil::ThumbExists(strCoverArt))
       {
         int nPos = strExtension.Find('/');

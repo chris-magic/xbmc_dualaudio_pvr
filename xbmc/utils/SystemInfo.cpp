@@ -43,7 +43,6 @@
 #include "osx/DarwinUtils.h"
 #include "osx/CocoaInterface.h"
 #endif
-#include "powermanagement/PowerManager.h"
 
 CSysInfo g_sysinfo;
 
@@ -60,7 +59,6 @@ bool CSysInfoJob::DoWork()
   m_info.cpuFrequency      = GetCPUFreqInfo();
   m_info.kernelVersion     = CSysInfo::GetKernelVersion();
   m_info.macAddress        = GetMACAddress();
-  m_info.batteryLevel      = GetBatteryLevel();
   return true;
 }
 
@@ -101,13 +99,6 @@ CStdString CSysInfoJob::GetMACAddress()
 CStdString CSysInfoJob::GetVideoEncoder()
 {
   return "GPU: " + g_Windowing.GetRenderRenderer();
-}
-
-CStdString CSysInfoJob::GetBatteryLevel()
-{
-  CStdString strVal;
-  strVal.Format("%d%%", g_powerManager.BatteryLevel());
-  return strVal;
 }
 
 double CSysInfoJob::GetCPUFrequency()
@@ -197,8 +188,6 @@ CStdString CSysInfo::TranslateInfo(int info) const
       return g_localizeStrings.Get(13274);
     else
       return g_localizeStrings.Get(13297);
-  case SYSTEM_BATTERY_LEVEL:
-    return m_info.batteryLevel;
   default:
     return "";
   }
@@ -722,11 +711,19 @@ bool CSysInfo::IsAppleTV()
 
 bool CSysInfo::IsAppleTV2()
 {
-#if defined(__APPLE__)
-  return DarwinIsAppleTV2();
-#else
-  return false;
+  bool        result = false;
+#if defined(__APPLE__) && defined(__arm__)
+  char        buffer[512];
+  size_t      len = 512;
+  std::string hw_machine = "unknown";
+
+  if (sysctlbyname("hw.machine", &buffer, &len, NULL, 0) == 0)
+    hw_machine = buffer;
+
+  if (hw_machine.find("AppleTV2,1") != std::string::npos)
+    result = true;
 #endif
+  return result;
 }
 
 bool CSysInfo::HasVideoToolBoxDecoder()

@@ -92,6 +92,8 @@ bool CGUIWindowLoginScreen::OnMessage(CGUIMessage& message)
 
           return bResult;
         }
+        else if (iAction == ACTION_PREVIOUS_MENU) // oh no u don't
+          return false;
         else if (iAction == ACTION_SELECT_ITEM || iAction == ACTION_MOUSE_LEFT_CLICK)
         {
           int iItem = m_viewControl.GetSelectedItem();
@@ -137,8 +139,6 @@ bool CGUIWindowLoginScreen::OnAction(const CAction &action)
       CBuiltins::Execute(action.GetName());
     return true;
   }
-  if (action.GetID() == ACTION_PREVIOUS_MENU || action.GetID() == ACTION_NAV_BACK)
-    return false; // no escape from the login window
   return CGUIWindow::OnAction(action);
 }
 

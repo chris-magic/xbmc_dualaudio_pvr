@@ -22,12 +22,10 @@
  */
 
 #include "DVDVideoCodec.h"
-#include "DVDResource.h"
 #include "DllAvCodec.h"
 #include "DllAvFormat.h"
 #include "DllAvUtil.h"
 #include "DllSwScale.h"
-#include "DllAvFilter.h"
 
 class CVDPAU;
 class CCriticalSection;
@@ -35,10 +33,10 @@ class CCriticalSection;
 class CDVDVideoCodecFFmpeg : public CDVDVideoCodec
 {
 public:
-  class IHardwareDecoder : public IDVDResourceCounted<IHardwareDecoder>
+  class IHardwareDecoder
   {
     public:
-             IHardwareDecoder() {}
+             IHardwareDecoder() : m_references(1) {}
     virtual ~IHardwareDecoder() {};
     virtual bool Open      (AVCodecContext* avctx, const enum PixelFormat) = 0;
     virtual int  Decode    (AVCodecContext* avctx, AVFrame* frame) = 0;
@@ -47,6 +45,10 @@ public:
     virtual void Reset     () {}
     virtual const std::string Name() = 0;
     virtual CCriticalSection* Section() { return NULL; }
+    virtual long              Release();
+    virtual IHardwareDecoder* Acquire();
+    protected:
+    long m_references;
   };
 
   CDVDVideoCodecFFmpeg();
@@ -58,7 +60,6 @@ public:
   bool GetPictureCommon(DVDVideoPicture* pDvdVideoPicture);
   virtual bool GetPicture(DVDVideoPicture* pDvdVideoPicture);
   virtual void SetDropState(bool bDrop);
-  virtual unsigned int SetFilters(unsigned int filters);
   virtual const char* GetName() { return m_name.c_str(); }; // m_name is never changed after open
   virtual unsigned GetConvergeCount();
 
@@ -74,20 +75,11 @@ public:
 protected:
   static enum PixelFormat GetFormat(struct AVCodecContext * avctx, const PixelFormat * fmt);
 
-  int  FilterOpen(const CStdString& filters);
-  void FilterClose();
-  int  FilterProcess(AVFrame* frame);
-
+  void GetVideoAspect(AVCodecContext* CodecContext, unsigned int& iWidth, unsigned int& iHeight);
   AVFrame* m_pFrame;
   AVCodecContext* m_pCodecContext;
 
   AVPicture* m_pConvertFrame;
-  CStdString       m_filters;
-  CStdString       m_filters_next;
-  AVFilterGraph*   m_pFilterGraph;
-  AVFilterContext* m_pFilterIn;
-  AVFilterContext* m_pFilterOut;
-  AVFilterLink*    m_pFilterLink;
 
   int m_iPictureWidth;
   int m_iPictureHeight;
@@ -98,8 +90,6 @@ protected:
   DllAvCodec m_dllAvCodec;
   DllAvUtil  m_dllAvUtil;
   DllSwScale m_dllSwScale;
-  DllAvFilter m_dllAvFilter;
-
   std::string m_name;
   bool              m_bSoftware;
   IHardwareDecoder *m_pHardware;
@@ -107,3 +97,4 @@ protected:
   double m_dts;
   bool   m_started;
 };
+

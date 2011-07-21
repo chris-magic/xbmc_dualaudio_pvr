@@ -99,7 +99,6 @@ public:
   virtual ~CGUISelectButtonControl(void);
   virtual CGUISelectButtonControl *Clone() const { return new CGUISelectButtonControl(*this); };
 
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
   virtual bool OnAction(const CAction &action) ;
   virtual void OnLeft();
@@ -115,7 +114,7 @@ public:
 
 protected:
   virtual EVENT_RESULT OnMouseEvent(const CPoint &point, const CMouseEvent &event);
-  virtual bool UpdateColors();
+  virtual void UpdateColors();
   bool m_bShowSelect;
   CGUITexture m_imgBackground;
   CGUITexture m_imgLeft;

@@ -44,46 +44,37 @@ using namespace XFILE;
 #define TIME_TO_BUSY_DIALOG 500
 
 class CGetDirectory
+  : IJobCallback
 {
 private:
-
-  struct CResult
-  {
-    CResult(const CStdString& dir) : m_event(true), m_dir(dir), m_result(false) {}
-    CEvent        m_event;
-    CFileItemList m_list;
-    CStdString    m_dir;
-    bool          m_result;
-  };
-
   struct CGetJob
     : CJob
   {
-    CGetJob(boost::shared_ptr<IDirectory>& imp
-          , boost::shared_ptr<CResult>& result)
-      : m_result(result)
-      , m_imp(imp)
+    CGetJob(IDirectory& imp
+          , const CStdString& dir
+          , CFileItemList& list)
+      : m_dir(dir)
+      , m_list(list)
+      , m_imp(imp)      
     {}
   public:
     virtual bool DoWork()
     {
-      m_result->m_list.m_strPath = m_result->m_dir;
-      m_result->m_result         = m_imp->GetDirectory(m_result->m_dir, m_result->m_list);
-      m_result->m_event.Set();
-      return m_result->m_result;
+      m_list.m_strPath = m_dir;
+      return m_imp.GetDirectory(m_dir, m_list);
     }
-
-    boost::shared_ptr<CResult>    m_result;
-    boost::shared_ptr<IDirectory> m_imp;
+    CStdString     m_dir;
+    CFileItemList& m_list;
+    IDirectory&    m_imp;
   };
 
 public:
 
-  CGetDirectory(boost::shared_ptr<IDirectory>& imp, const CStdString& dir) 
-    : m_result(new CResult(dir))
+  CGetDirectory(IDirectory& imp, const CStdString& dir)
+    : m_event(true)
   {
-    m_id = CJobManager::GetInstance().AddJob(new CGetJob(imp, m_result)
-                                           , NULL
+    m_id = CJobManager::GetInstance().AddJob(new CGetJob(imp, dir, m_list)
+                                           , this
                                            , CJob::PRIORITY_HIGH);
   }
  ~CGetDirectory()
@@ -91,26 +82,37 @@ public:
     CJobManager::GetInstance().CancelJob(m_id);
   }
 
+  virtual void OnJobComplete(unsigned int jobID, bool success, CJob *job)
+  {
+    m_result = success;
+    m_event.Set();
+  }
+
   bool Wait(unsigned int timeout)
   {
-    return m_result->m_event.WaitMSec(timeout);
+    return m_event.WaitMSec(timeout);
   }
 
   bool GetDirectory(CFileItemList& list)
   {
-    /* if it was not finished or failed, return failure */
-    if(!m_result->m_event.WaitMSec(0) || !m_result->m_result)
+    m_event.Wait();
+    if(!m_result)
     {
       list.Clear();
       return false;
     }
-
-    list.Copy(m_result->m_list);
+    list.Copy(m_list);
     return true;
   }
-  boost::shared_ptr<CResult> m_result;
-  unsigned int               m_id;
+
+  bool          m_result;
+  CFileItemList m_list;
+  CEvent        m_event;
+  unsigned int  m_id;
 };
+
+
+
 
 
 CDirectory::CDirectory()
@@ -124,7 +126,7 @@ bool CDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items, C
   try
   {
     CStdString realPath = Translate(strPath);
-    boost::shared_ptr<IDirectory> pDirectory(CFactoryDirectory::Create(realPath));
+    auto_ptr<IDirectory> pDirectory(CFactoryDirectory::Create(realPath));
     if (!pDirectory.get())
       return false;
 
@@ -143,29 +145,40 @@ bool CDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items, C
       pDirectory->SetUseFileDirectories(bUseFileDirectories);
       pDirectory->SetExtFileInfo(extFileInfo);
 
-      bool result = false, cancel = false;
-      while (!result && !cancel)
+      bool result = false;
+      while (!result)
       {
         if (g_application.IsCurrentThread() && allowThreads && !URIUtils::IsSpecial(strPath))
         {
           CSingleExit ex(g_graphicsContext);
 
-          CGetDirectory get(pDirectory, realPath);
+          CGetDirectory get(*pDirectory, realPath);
           if(!get.Wait(TIME_TO_BUSY_DIALOG))
           {
-            CGUIDialogBusy* dialog = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
-            dialog->Show();
-
+            CGUIDialogBusy* dialog = NULL;
             while(!get.Wait(10))
             {
               CSingleLock lock(g_graphicsContext);
-
-              if(dialog->IsCanceled())
+              if(g_windowManager.IsWindowVisible(WINDOW_DIALOG_PROGRESS)
+              || g_windowManager.IsWindowVisible(WINDOW_DIALOG_LOCK_SETTINGS))
               {
-                cancel = true;
-                break;
+                if(dialog)
+                {
+                  dialog->Close();
+                  dialog = NULL;
+                }
+                g_windowManager.Process(false);
               }
-              g_windowManager.ProcessRenderLoop(false);
+              else
+              {
+                if(dialog == NULL)
+                {
+                  dialog = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
+                  if(dialog)
+                    dialog->Show();
+                }
+                g_windowManager.Process(true);
+              }
             }
             if(dialog)
               dialog->Close();
@@ -180,7 +193,7 @@ bool CDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items, C
 
         if (!result)
         {
-          if (!cancel && g_application.IsCurrentThread() && pDirectory->ProcessRequirements())
+          if (g_application.IsCurrentThread() && pDirectory->ProcessRequirements())
             continue;
           CLog::Log(LOGERROR, "%s - Error getting %s", __FUNCTION__, strPath.c_str());
           return false;

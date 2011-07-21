@@ -39,17 +39,11 @@ CGUIToggleButtonControl::~CGUIToggleButtonControl(void)
 {
 }
 
-void CGUIToggleButtonControl::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
+void CGUIToggleButtonControl::Render()
 {
   // ask our infoManager whether we are selected or not...
-  bool selected = m_bSelected;
   if (m_toggleSelect)
-    selected = g_infoManager.GetBool(m_toggleSelect, m_parentID);
-  if (selected != m_bSelected)
-  {
-    MarkDirtyRegion();
-    m_bSelected = selected;
-  }
+    m_bSelected = g_infoManager.GetBool(m_toggleSelect, m_parentID);
 
   if (m_bSelected)
   {
@@ -58,15 +52,6 @@ void CGUIToggleButtonControl::Process(unsigned int currentTime, CDirtyRegionList
     m_selectButton.SetVisible(IsVisible());
     m_selectButton.SetEnabled(!IsDisabled());
     m_selectButton.SetPulseOnSelect(m_pulseOnSelect);
-    m_selectButton.Process(currentTime, dirtyregions);
-  }
-  CGUIButtonControl::Process(currentTime, dirtyregions);
-}
-
-void CGUIToggleButtonControl::Render()
-{
-  if (m_bSelected)
-  {
     m_selectButton.Render();
     CGUIControl::Render();
   }
@@ -127,13 +112,11 @@ void CGUIToggleButtonControl::SetHeight(float height)
   m_selectButton.SetHeight(height);
 }
 
-bool CGUIToggleButtonControl::UpdateColors()
+void CGUIToggleButtonControl::UpdateColors()
 {
-  bool changed = CGUIButtonControl::UpdateColors();
-  changed |= m_selectButton.SetColorDiffuse(m_diffuseColor);
-  changed |= m_selectButton.UpdateColors();
-
-  return changed;
+  CGUIButtonControl::UpdateColors();
+  m_selectButton.SetColorDiffuse(m_diffuseColor);
+  m_selectButton.UpdateColors();
 }
 
 void CGUIToggleButtonControl::SetLabel(const string &strLabel)

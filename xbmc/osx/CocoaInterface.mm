@@ -236,8 +236,8 @@ void Cocoa_DoAppleScriptFile(const char* filePath)
 
 const char* Cocoa_GetIconFromBundle(const char *_bundlePath, const char* _iconName)
 {
-  NSString* bundlePath = [NSString stringWithUTF8String:_bundlePath];
-  NSString* iconName = [NSString stringWithUTF8String:_iconName];
+  NSString* bundlePath = [NSString stringWithCString:_bundlePath];
+  NSString* iconName = [NSString stringWithCString:_iconName];
   NSBundle* bundle = [NSBundle bundleWithPath:bundlePath];
   NSString* iconPath = [bundle pathForResource:iconName ofType:@"icns"];
   NSString* bundleIdentifier = [bundle bundleIdentifier];
@@ -336,7 +336,7 @@ bool Cocoa_GetVolumeNameFromMountPoint(const char *mountPoint, CStdString &volum
   }
 
   NSString *volumename = [dd objectForKey:(NSString*)kDADiskDescriptionVolumeNameKey];
-  volumeName = [volumename UTF8String];
+  volumeName = [volumename cString];
 
   CFRelease(session);		        
   CFRelease(disk);		        
@@ -524,12 +524,12 @@ bool Cocoa_HasVDADecoder()
   if (result == -1)
   {
     if (Cocoa_GetOSVersion() >= 0x1063)
-      result = (access(DLL_PATH_LIBVDADECODER, 0) == 0) ? 1:0;
+      result = access(DLL_PATH_LIBVDADECODER, 0) == 0;
     else
-      result = 0;
+      result = false;
   }
 
-  return (result == 1);
+  return(result);
 }
 
 bool Cocoa_GPUForDisplayIsNvidiaPureVideo3()

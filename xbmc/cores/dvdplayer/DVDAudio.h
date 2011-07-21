@@ -27,7 +27,6 @@
 #include "cores/AudioRenderers/IAudioRenderer.h"
 #include "cores/IAudioCallback.h"
 #include "threads/CriticalSection.h"
-#include "PlatformDefs.h"
 
 #ifndef _LINUX
 enum CodecID;
@@ -61,7 +60,7 @@ public:
   void SetDynamicRangeCompression(long drc);
   void Pause();
   void Resume();
-  bool Create(const DVDAudioFrame &audioframe, CodecID codec);
+  bool Create(const DVDAudioFrame &audioframe, CodecID codec, bool bAudio2 = false);
   bool IsValidFormat(const DVDAudioFrame &audioframe);
   void Destroy();
   DWORD AddPackets(const DVDAudioFrame &audioframe);

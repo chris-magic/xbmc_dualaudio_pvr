@@ -30,6 +30,7 @@ public:
   CGUIWindowSettingsProfile(void);
   virtual ~CGUIWindowSettingsProfile(void);
   virtual bool OnMessage(CGUIMessage& message);
+  virtual bool OnAction(const CAction &action);
 
 protected:
   virtual void OnInitWindow();

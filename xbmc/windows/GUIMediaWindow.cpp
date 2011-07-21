@@ -152,10 +152,18 @@ CFileItemPtr CGUIMediaWindow::GetCurrentListItem(int offset)
 
 bool CGUIMediaWindow::OnAction(const CAction &action)
 {
-  if (action.GetID() == ACTION_PARENT_DIR ||
-     (action.GetID() == ACTION_NAV_BACK && !(m_vecItems->IsVirtualDirectoryRoot() || m_vecItems->m_strPath == m_startDirectory)))
+  if (action.GetID() == ACTION_PARENT_DIR)
   {
-    GoParentFolder();
+    if ((m_vecItems->IsVirtualDirectoryRoot() || m_vecItems->m_strPath == m_startDirectory) && g_advancedSettings.m_bUseEvilB)
+      g_windowManager.PreviousWindow();
+    else
+      GoParentFolder();
+    return true;
+  }
+
+  if (action.GetID() == ACTION_PREVIOUS_MENU)
+  {
+    g_windowManager.PreviousWindow();
     return true;
   }
 
@@ -649,8 +657,8 @@ bool CGUIMediaWindow::GetDirectory(const CStdString &strDirectory, CFileItemList
     items.AddFront(pItem, 0);
   }
 
-  CStdStringArray regexps;
   int iWindow = GetID();
+  CStdStringArray regexps;
 
   if (iWindow == WINDOW_VIDEO_FILES)
     regexps = g_advancedSettings.m_videoExcludeFromListingRegExps;
@@ -747,8 +755,6 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory)
     pItem->SetIconImage("DefaultAddSource.png");
     pItem->SetLabel(strLabel);
     pItem->SetLabelPreformated(true);
-    pItem->m_bIsFolder = true;
-    pItem->SetSpecialSort(SORT_ON_BOTTOM);
     m_vecItems->Add(pItem);
   }
   m_iLastControl = GetFocusedControlID();
@@ -796,8 +802,7 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory)
   if (!bSelectedFound)
     m_viewControl.SetSelectedItem(0);
 
-  if (iWindow != WINDOW_PVR || (iWindow == WINDOW_PVR && m_vecItems->m_strPath.Left(17) == "pvr://recordings/"))
-    m_history.AddPath(m_vecItems->m_strPath);
+  m_history.AddPath(m_vecItems->m_strPath);
 
   //m_history.DumpPathHistory();
 
@@ -963,7 +968,7 @@ bool CGUIMediaWindow::OnClick(int iItem)
       if (CAddonMgr::Get().GetAddon(url.GetHostName(),addon))
       {
         PluginPtr plugin = boost::dynamic_pointer_cast<CPluginSource>(addon);
-        if (plugin && plugin->Provides(CPluginSource::AUDIO) && pItem->IsAudio())
+        if (plugin && plugin->Provides(CPluginSource::AUDIO))
         {
           iPlaylist = PLAYLIST_MUSIC;
           autoplay = g_guiSettings.GetBool("musicplayer.autoplaynextitem");

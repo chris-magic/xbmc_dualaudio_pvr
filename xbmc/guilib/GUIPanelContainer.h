@@ -39,7 +39,6 @@ public:
   virtual ~CGUIPanelContainer(void);
   virtual CGUIPanelContainer *Clone() const { return new CGUIPanelContainer(*this); };
 
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
   virtual bool OnAction(const CAction &action);
   virtual bool OnMessage(CGUIMessage& message);

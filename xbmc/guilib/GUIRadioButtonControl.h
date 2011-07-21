@@ -45,7 +45,6 @@ public:
   virtual ~CGUIRadioButtonControl(void);
   virtual CGUIRadioButtonControl *Clone() const { return new CGUIRadioButtonControl(*this); };
 
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
   virtual bool OnAction(const CAction &action) ;
   virtual bool OnMessage(CGUIMessage& message);
@@ -61,7 +60,7 @@ public:
   void SetToggleSelect(int toggleSelect) { m_toggleSelect = toggleSelect; };
   bool IsSelected() const { return m_bSelected; };
 protected:
-  virtual bool UpdateColors();
+  virtual void UpdateColors();
   CGUITexture m_imgRadioOn;
   CGUITexture m_imgRadioOff;
   float m_radioPosX;

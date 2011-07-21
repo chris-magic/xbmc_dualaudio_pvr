@@ -7,7 +7,6 @@ SOURCE=$(LIBNAME)-$(VERSION)
 ARCHIVE=$(SOURCE).tar.gz
 
 # configuration settings
-export PATH:=$(TOOLCHAIN)/bin:${PREFIX}/bin:/Developer/usr/bin:${PATH}
 CONFIGURE=./configure --prefix=$(PREFIX)
 
 LIBDYLIB=$(SOURCE)/.libs/$(LIBNAME).dylib
@@ -21,7 +20,6 @@ $(SOURCE): $(TARBALLS_LOCATION)/$(ARCHIVE)
 	rm -rf $(SOURCE)
 	$(ARCHIVE_TOOL) $(ARCHIVE_TOOL_FLAGS) $(TARBALLS_LOCATION)/$(ARCHIVE)
 	echo $(SOURCE) > .gitignore
-	cd $(SOURCE); autoreconf -vif
 	cd $(SOURCE); $(CONFIGURE)
 
 $(LIBDYLIB): $(SOURCE)

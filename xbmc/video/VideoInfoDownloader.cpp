@@ -48,25 +48,23 @@ int CVideoInfoDownloader::InternalFindMovie(const CStdString &strMovie,
 {
   try
   {
-    movielist = m_info->FindMovie(m_http, strMovie, cleanChars);
+    if (!(movielist = m_info->FindMovie(m_http, strMovie, cleanChars)).empty())
+      return 1;
   }
   catch (const ADDON::CScraperError &sce)
   {
     ShowErrorDialog(sce);
-    return sce.FAborted() ? 0 : -1;
+    return 1;
   }
-  return 1;  // success
+  return 0;
 }
 
 void CVideoInfoDownloader::ShowErrorDialog(const ADDON::CScraperError &sce)
 {
-  if (!sce.Title().empty())
-  {
-    CGUIDialogOK *pdlg = (CGUIDialogOK *)g_windowManager.GetWindow(WINDOW_DIALOG_OK);
-    pdlg->SetHeading(sce.Title());
-    pdlg->SetLine(0, sce.Message());
-    g_application.getApplicationMessenger().DoModal(pdlg, WINDOW_DIALOG_OK);
-  }
+  CGUIDialogOK *pdlg = (CGUIDialogOK *)g_windowManager.GetWindow(WINDOW_DIALOG_OK);
+  pdlg->SetHeading(sce.Title());
+  pdlg->SetLine(0, sce.Message());
+  g_application.getApplicationMessenger().DoModal(pdlg, WINDOW_DIALOG_OK);
 }
 
 // threaded functions
@@ -142,7 +140,7 @@ int CVideoInfoDownloader::FindMovie(const CStdString &strMovie,
   // unthreaded
   int success = InternalFindMovie(strMovie, movieList);
   // NOTE: this might be improved by rescraping if the match quality isn't high?
-  if (success == 1 && movieList.empty())
+  if (success && movieList.empty())
   { // no results. try without cleaning chars like '.' and '_'
     success = InternalFindMovie(strMovie, movieList, false);
   }

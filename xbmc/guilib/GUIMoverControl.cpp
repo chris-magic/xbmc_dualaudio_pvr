@@ -46,7 +46,7 @@ CGUIMoverControl::CGUIMoverControl(int parentID, int controlID, float posX, floa
 CGUIMoverControl::~CGUIMoverControl(void)
 {}
 
-void CGUIMoverControl::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
+void CGUIMoverControl::Render()
 {
   if (m_bInvalidated)
   {
@@ -66,27 +66,17 @@ void CGUIMoverControl::Process(unsigned int currentTime, CDirtyRegionList &dirty
       alphaChannel = 63 - (alphaCounter % 64);
 
     alphaChannel += 192;
-    if (SetAlpha( (unsigned char)alphaChannel ))
-      MarkDirtyRegion();
+    SetAlpha( (unsigned char)alphaChannel );
     m_imgFocus.SetVisible(true);
     m_imgNoFocus.SetVisible(false);
     m_frameCounter++;
   }
   else
   {
-    if (SetAlpha(0xff))
-      MarkDirtyRegion();
+    SetAlpha(0xff);
     m_imgFocus.SetVisible(false);
     m_imgNoFocus.SetVisible(true);
   }
-  m_imgFocus.Process(currentTime);
-  m_imgNoFocus.Process(currentTime);
-
-  CGUIControl::Process(currentTime, dirtyregions);
-}
-
-void CGUIMoverControl::Render()
-{
   // render both so the visibility settings cause the frame counter to resetcorrectly
   m_imgFocus.Render();
   m_imgNoFocus.Render();
@@ -244,19 +234,17 @@ void CGUIMoverControl::SetPosition(float posX, float posY)
   m_imgNoFocus.SetPosition(posX, posY);
 }
 
-bool CGUIMoverControl::SetAlpha(unsigned char alpha)
+void CGUIMoverControl::SetAlpha(unsigned char alpha)
 {
-  return m_imgFocus.SetAlpha(alpha) | 
-         m_imgNoFocus.SetAlpha(alpha);
+  m_imgFocus.SetAlpha(alpha);
+  m_imgNoFocus.SetAlpha(alpha);
 }
 
-bool CGUIMoverControl::UpdateColors()
+void CGUIMoverControl::UpdateColors()
 {
-  bool changed = CGUIControl::UpdateColors();
-  changed |= m_imgFocus.SetDiffuseColor(m_diffuseColor);
-  changed |= m_imgNoFocus.SetDiffuseColor(m_diffuseColor);
-
-  return changed;
+  CGUIControl::UpdateColors();
+  m_imgFocus.SetDiffuseColor(m_diffuseColor);
+  m_imgNoFocus.SetDiffuseColor(m_diffuseColor);
 }
 
 void CGUIMoverControl::SetLimits(int iX1, int iY1, int iX2, int iY2)

@@ -21,20 +21,18 @@
  *
  */
 
-#include "guilib/GUIDialog.h"
+#include "guilib/GUIWindow.h"
 
 class CGUIWindowPointer :
-      public CGUIDialog
+      public CGUIWindow
 {
 public:
   CGUIWindowPointer(void);
   virtual ~CGUIWindowPointer(void);
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
+  virtual void Render();
 protected:
   void SetPointer(int pointer);
   virtual void OnWindowLoaded();
-  virtual void UpdateVisibility();
 private:
   int m_pointer;
-  bool m_active;
 };

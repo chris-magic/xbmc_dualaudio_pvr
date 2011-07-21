@@ -42,7 +42,6 @@ public:
   virtual bool CanSuspend();
   virtual bool CanHibernate();
   virtual bool CanReboot();
-  virtual int  BatteryLevel();
 
   virtual bool PumpPowerEvents(IPowerEventsCallback *callback);
 

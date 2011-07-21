@@ -45,7 +45,7 @@ CGUIResizeControl::CGUIResizeControl(int parentID, int controlID, float posX, fl
 CGUIResizeControl::~CGUIResizeControl(void)
 {}
 
-void CGUIResizeControl::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
+void CGUIResizeControl::Render()
 {
   if (m_bInvalidated)
   {
@@ -65,26 +65,18 @@ void CGUIResizeControl::Process(unsigned int currentTime, CDirtyRegionList &dirt
       alphaChannel = 63 - (alphaCounter % 64);
 
     alphaChannel += 192;
-    if (SetAlpha( (unsigned char)alphaChannel ))
-      MarkDirtyRegion();
+    SetAlpha( (unsigned char)alphaChannel );
     m_imgFocus.SetVisible(true);
     m_imgNoFocus.SetVisible(false);
     m_frameCounter++;
   }
   else
   {
-    if (SetAlpha(0xff))
-      MarkDirtyRegion();
+    SetAlpha(0xff);
     m_imgFocus.SetVisible(false);
     m_imgNoFocus.SetVisible(true);
   }
-  m_imgFocus.Process(currentTime);
-  m_imgNoFocus.Process(currentTime);
-  CGUIControl::Process(currentTime, dirtyregions);
-}
-
-void CGUIResizeControl::Render()
-{
+  // render both so the visibility settings cause the frame counter to resetcorrectly
   m_imgFocus.Render();
   m_imgNoFocus.Render();
   CGUIControl::Render();
@@ -223,19 +215,17 @@ void CGUIResizeControl::SetPosition(float posX, float posY)
   m_imgNoFocus.SetPosition(posX, posY);
 }
 
-bool CGUIResizeControl::SetAlpha(unsigned char alpha)
+void CGUIResizeControl::SetAlpha(unsigned char alpha)
 {
-  return m_imgFocus.SetAlpha(alpha) | 
-         m_imgNoFocus.SetAlpha(alpha);
+  m_imgFocus.SetAlpha(alpha);
+  m_imgNoFocus.SetAlpha(alpha);
 }
 
-bool CGUIResizeControl::UpdateColors()
+void CGUIResizeControl::UpdateColors()
 {
-  bool changed = CGUIControl::UpdateColors();
-  changed |= m_imgFocus.SetDiffuseColor(m_diffuseColor);
-  changed |= m_imgNoFocus.SetDiffuseColor(m_diffuseColor);
-
-  return changed;
+  CGUIControl::UpdateColors();
+  m_imgFocus.SetDiffuseColor(m_diffuseColor);
+  m_imgNoFocus.SetDiffuseColor(m_diffuseColor);
 }
 
 void CGUIResizeControl::SetLimits(float x1, float y1, float x2, float y2)

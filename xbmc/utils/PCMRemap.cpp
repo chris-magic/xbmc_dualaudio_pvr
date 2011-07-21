@@ -167,7 +167,8 @@ CPCMRemap::CPCMRemap() :
   m_inChannels  (0),
   m_outChannels (0),
   m_inSampleSize(0),
-  m_ignoreLayout(false)
+  m_ignoreLayout(false),
+  m_bAudio2     (false)
 {
   Dispose();
 }
@@ -350,7 +351,11 @@ void CPCMRemap::BuildMap()
   m_outStride = m_inSampleSize * m_outChannels;
 
   /* see if we need to normalize the levels */
-  bool dontnormalize = g_guiSettings.GetBool("audiooutput.dontnormalizelevels");
+  bool dontnormalize;
+  if (!m_bAudio2)
+    dontnormalize = g_guiSettings.GetBool("audiooutput.dontnormalizelevels");
+  else
+    dontnormalize = g_guiSettings.GetBool("audiooutput2.dontnormalizelevels");
   CLog::Log(LOGDEBUG, "CPCMRemap: Downmix normalization is %s", (dontnormalize ? "disabled" : "enabled"));
 
   ResolveChannels();
@@ -444,17 +449,33 @@ enum PCMChannels *CPCMRemap::SetInputFormat(unsigned int channels, enum PCMChann
   assert(sampleSize == 2);
 
   /* get the audio layout, and count the channels in it */
-  m_channelLayout  = (enum PCMLayout)g_guiSettings.GetInt("audiooutput.channellayout");
+  if (!m_bAudio2)
+    m_channelLayout  = (enum PCMLayout)g_guiSettings.GetInt("audiooutput.channellayout");
+  else
+    m_channelLayout  = (enum PCMLayout)g_guiSettings.GetInt("audiooutput2.channellayout");
   if (m_channelLayout >= PCM_MAX_LAYOUT) m_channelLayout = PCM_LAYOUT_2_0;
 
   //spdif only has 2 pcm channels, so don't try to use more
-  if (g_guiSettings.GetInt("audiooutput.mode") == AUDIO_IEC958)
+  if (!m_bAudio2)
   {
-    CLog::Log(LOGINFO, "CPCMRemap: Configured speaker layout: %s (iec958)\n", PCMLayoutStr(m_channelLayout).c_str());
-    m_channelLayout = PCM_LAYOUT_2_0;
+    if (g_guiSettings.GetInt("audiooutput.mode") == AUDIO_IEC958)
+    {
+      CLog::Log(LOGINFO, "CPCMRemap: Configured speaker layout: %s (iec958)\n", PCMLayoutStr(m_channelLayout).c_str());
+      m_channelLayout = PCM_LAYOUT_2_0;
+    }
+    else
+      CLog::Log(LOGINFO, "CPCMRemap: Configured speaker layout: %s\n", PCMLayoutStr(m_channelLayout).c_str());
   }
   else
-    CLog::Log(LOGINFO, "CPCMRemap: Configured speaker layout: %s\n", PCMLayoutStr(m_channelLayout).c_str());
+  {
+    if (g_guiSettings.GetInt("audiooutput2.mode") == AUDIO_IEC958)
+    {
+      CLog::Log(LOGINFO, "CPCMRemap: Configured speaker layout: %s (iec958)\n", PCMLayoutStr(m_channelLayout).c_str());
+      m_channelLayout = PCM_LAYOUT_2_0;
+    }
+    else
+      CLog::Log(LOGINFO, "CPCMRemap: Configured speaker 2 layout: %s\n", PCMLayoutStr(m_channelLayout).c_str());
+  }
 
   
   DumpMap("I", channels, channelMap);
@@ -629,4 +650,3 @@ CStdString CPCMRemap::PCMLayoutStr(enum PCMLayout ename)
 
   return namestr;
 }
-

@@ -40,9 +40,7 @@ CSectionLoader::CSectionLoader(void)
 {}
 
 CSectionLoader::~CSectionLoader(void)
-{
-  UnloadAll();
-}
+{}
 
 bool CSectionLoader::IsLoaded(const CStdString& strSection)
 {

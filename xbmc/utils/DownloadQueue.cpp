@@ -25,7 +25,6 @@
 
 #include "filesystem/File.h"
 #include "filesystem/FileCurl.h"
-#include "threads/SingleLock.h"
 
 using namespace std;
 using namespace XFILE;
@@ -34,6 +33,7 @@ WORD CDownloadQueue::m_wNextQueueId = 0;
 
 CDownloadQueue::CDownloadQueue(void) : CThread()
 {
+  InitializeCriticalSection(&m_critical);
   m_bStop = false;
   m_wQueueId = m_wNextQueueId++;
   m_dwNextItemId = 0;
@@ -47,35 +47,39 @@ void CDownloadQueue::OnStartup()
 
 CDownloadQueue::~CDownloadQueue(void)
 {
+  DeleteCriticalSection(&m_critical);
 }
 
 
 TICKET CDownloadQueue::RequestContent(const CStdString& aUrl, IDownloadQueueObserver* aObserver)
 {
-  CSingleLock lock(m_critical);
+  EnterCriticalSection(&m_critical);
+
   TICKET ticket(m_wQueueId, m_dwNextItemId++);
 
   Command request = {ticket, aUrl, "", aObserver};
   m_queue.push(request);
 
+  LeaveCriticalSection(&m_critical);
   return request.ticket;
 }
 
 TICKET CDownloadQueue::RequestFile(const CStdString& aUrl, const CStdString& aFilePath, IDownloadQueueObserver* aObserver)
 {
-  CSingleLock lock(m_critical);
+  EnterCriticalSection(&m_critical);
 
   TICKET ticket(m_wQueueId, m_dwNextItemId++);
 
   Command request = {ticket, aUrl, aFilePath, aObserver};
   m_queue.push(request);
 
+  LeaveCriticalSection(&m_critical);
   return request.ticket;
 }
 
 void CDownloadQueue::CancelRequests(IDownloadQueueObserver *aObserver)
 {
-  CSingleLock lock(m_critical);
+  EnterCriticalSection(&m_critical);
 
   CLog::Log(LOGDEBUG, "CancelRequests from observer at %p", aObserver);
   // run through our queue, and create a new queue with the requests
@@ -90,11 +94,12 @@ void CDownloadQueue::CancelRequests(IDownloadQueueObserver *aObserver)
     newQueue.push(request);
   }
   m_queue = newQueue;
+  LeaveCriticalSection(&m_critical);
 }
 
 TICKET CDownloadQueue::RequestFile(const CStdString& aUrl, IDownloadQueueObserver* aObserver)
 {
-  CSingleLock lock(m_critical);
+  EnterCriticalSection(&m_critical);
 
   CLog::Log(LOGDEBUG, "RequestFile from observer at %p", aObserver);
   // create a temporary destination
@@ -109,15 +114,17 @@ TICKET CDownloadQueue::RequestFile(const CStdString& aUrl, IDownloadQueueObserve
   Command request = {ticket, aUrl, strFilePath, aObserver};
   m_queue.push(request);
 
+  LeaveCriticalSection(&m_critical);
   return request.ticket;
 }
 
 VOID CDownloadQueue::Flush()
 {
-  CSingleLock lock(m_critical);
+  EnterCriticalSection(&m_critical);
 
   m_queue.empty();
 
+  LeaveCriticalSection(&m_critical);
 }
 
 void CDownloadQueue::Process()
@@ -131,12 +138,13 @@ void CDownloadQueue::Process()
   {
     while ( CDownloadQueue::Size() > 0 )
     {
-      CSingleLock lock(m_critical);
+      EnterCriticalSection(&m_critical);
 
       // get the first item, but don't pop it from our queue
       // so that the download can be interrupted
       Command request = m_queue.front();
-      lock.Leave();
+
+      LeaveCriticalSection(&m_critical);
 
       bool bFileRequest = request.content.length() > 0;
       DWORD dwSize = 0;
@@ -153,7 +161,7 @@ void CDownloadQueue::Process()
 
       // now re-grab the item as we may have cancelled our download
       // while we were working
-      { CSingleLock lock2(m_critical); // open lock2 scope
+      EnterCriticalSection(&m_critical);
 
       request = m_queue.front();
       m_queue.pop();
@@ -166,7 +174,7 @@ void CDownloadQueue::Process()
           if (bFileRequest)
           {
             request.observer->OnFileComplete(request.ticket, request.content, dwSize,
-                                             bSuccess ? IDownloadQueueObserver::Succeeded : IDownloadQueueObserver::Failed );
+                                            bSuccess ? IDownloadQueueObserver::Succeeded : IDownloadQueueObserver::Failed );
           }
           else
           {
@@ -184,7 +192,7 @@ void CDownloadQueue::Process()
           }
         }
       }
-      } // close lock2 scope
+      LeaveCriticalSection(&m_critical);
     }
 
     Sleep(500);
@@ -195,9 +203,11 @@ void CDownloadQueue::Process()
 
 INT CDownloadQueue::Size()
 {
-  CSingleLock lock(m_critical);
+  EnterCriticalSection(&m_critical);
 
   int sizeOfQueue = m_queue.size();
+
+  LeaveCriticalSection(&m_critical);
 
   return sizeOfQueue;
 }

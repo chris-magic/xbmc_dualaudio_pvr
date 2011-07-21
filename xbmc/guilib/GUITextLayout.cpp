@@ -195,19 +195,23 @@ void CGUITextLayout::RenderOutline(float x, float y, color_t color, color_t outl
 
 bool CGUITextLayout::Update(const CStdString &text, float maxWidth, bool forceUpdate /*= false*/, bool forceLTRReadingOrder /*= false*/)
 {
+  if (text == m_lastText && !forceUpdate)
+    return false;
+
   // convert to utf16
   CStdStringW utf16;
   utf8ToW(text, utf16);
 
   // update
-  return UpdateW(utf16, maxWidth, forceUpdate, forceLTRReadingOrder);
+  SetText(utf16, maxWidth, forceLTRReadingOrder);
+
+  // and set our parameters to indicate no further update is required
+  m_lastText = text;
+  return true;
 }
 
-bool CGUITextLayout::UpdateW(const CStdStringW &text, float maxWidth /*= 0*/, bool forceUpdate /*= false*/, bool forceLTRReadingOrder /*= false*/)
+void CGUITextLayout::SetText(const CStdStringW &text, float maxWidth, bool forceLTRReadingOrder /*= false*/)
 {
-  if (text.Equals(m_lastText) && !forceUpdate)
-    return false;
-
   vecText parsedText;
 
   // empty out our previous string
@@ -235,9 +239,6 @@ bool CGUITextLayout::UpdateW(const CStdStringW &text, float maxWidth /*= 0*/, bo
 
   // and cache the width and height for later reading
   CalcTextExtent();
-
-  m_lastText = text;
-  return true;
 }
 
 // BidiTransform is used to handle RTL text flipping in the string

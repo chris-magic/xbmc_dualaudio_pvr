@@ -47,9 +47,6 @@ public:
   virtual void SetViewPort(CRect& viewPort);
   virtual void GetViewPort(CRect& viewPort);
 
-  virtual void SetScissors(const CRect &rect);
-  virtual void ResetScissors();
-
   virtual void CaptureStateBlock();
   virtual void ApplyStateBlock();
 

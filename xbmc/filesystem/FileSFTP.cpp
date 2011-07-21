@@ -118,31 +118,38 @@ bool CSFTPSession::GetDirectory(const CStdString &base, const CStdString &folder
         }
 
         if (attributes && (attributes->name == NULL || strcmp(attributes->name, "..") == 0 || strcmp(attributes->name, ".") == 0))
-        {
-          CSingleLock lock(m_critSect);
-          sftp_attributes_free(attributes);
           continue;
-        }
-        
         if (attributes)
         {
-          CStdString itemName = attributes->name;
           CStdString localPath = folder;
-          localPath.append(itemName);
+          localPath.append(attributes->name);
 
           if (attributes->type == SSH_FILEXFER_TYPE_SYMLINK)
           {
             CSingleLock lock(m_critSect);
             sftp_attributes_free(attributes);
-            attributes = sftp_stat(m_sftp_session, CorrectPath(localPath).c_str());
+            char *realpath = sftp_readlink(m_sftp_session, CorrectPath(localPath).c_str());
+            if(realpath == NULL)
+              continue;
+            attributes = sftp_stat(m_sftp_session, realpath);
+#ifdef _MSC_VER
+            // hack since api doesn't expose any method to free
+            // the memory alloced here, we cheat and use a
+            // function that does a standard free inside the library
+            string_free((ssh_string)realpath);
+#else
+            free(realpath);
+#endif
             if (attributes == NULL)
+              continue;
+            if (attributes && (attributes->name == NULL || strcmp(attributes->name, "..") == 0 || strcmp(attributes->name, ".") == 0))
               continue;
           }
 
           CFileItemPtr pItem(new CFileItem);
-          pItem->SetLabel(itemName);
+          pItem->SetLabel(attributes->name);
 
-          if (itemName[0] == '.')
+          if (attributes->name[0] == '.')
             pItem->SetProperty("file:hidden", true);
 
           if (attributes->flags & SSH_FILEXFER_ATTR_ACMODTIME)
@@ -152,11 +159,6 @@ bool CSFTPSession::GetDirectory(const CStdString &base, const CStdString &folder
           {
             localPath.append("/");
             pItem->m_bIsFolder = true;
-            pItem->m_dwSize = 0;
-          }
-          else
-          {
-            pItem->m_dwSize = attributes->size;
           }
 
           pItem->m_strPath = base;
@@ -188,46 +190,35 @@ bool CSFTPSession::GetDirectory(const CStdString &base, const CStdString &folder
 
 bool CSFTPSession::Exists(const char *path)
 {
-  bool exists = false;
   CSingleLock lock(m_critSect);
-  if(m_connected)
-  {
-    sftp_attributes attributes = sftp_stat(m_sftp_session, CorrectPath(path).c_str());
-    exists = attributes != NULL;
+  sftp_attributes attributes = sftp_stat(m_sftp_session, CorrectPath(path).c_str());
+  bool exists = attributes != NULL;
 
-    if (attributes)
-      sftp_attributes_free(attributes);
-  }
+  if (attributes)
+    sftp_attributes_free(attributes);
+
   return exists;
 }
 
 int CSFTPSession::Stat(const char *path, struct __stat64* buffer)
 {
   CSingleLock lock(m_critSect);
-  if(m_connected)
+  m_LastActive = CTimeUtils::GetTimeMS();
+  sftp_attributes attributes = sftp_stat(m_sftp_session, CorrectPath(path).c_str());
+
+  if (attributes)
   {
-    m_LastActive = CTimeUtils::GetTimeMS();
-    sftp_attributes attributes = sftp_stat(m_sftp_session, CorrectPath(path).c_str());
+    memset(buffer, 0, sizeof(struct __stat64));
+    buffer->st_size = attributes->size;
+    buffer->st_mtime = attributes->mtime;
+    buffer->st_atime = attributes->atime;
 
-    if (attributes)
-    {
-      memset(buffer, 0, sizeof(struct __stat64));
-      buffer->st_size = attributes->size;
-      buffer->st_mtime = attributes->mtime;
-      buffer->st_atime = attributes->atime;
-
-      sftp_attributes_free(attributes);
-      return 0;
-    }
-    else
-    {
-      CLog::Log(LOGERROR, "SFTPSession: STAT - Failed to get attributes");
-      return -1;
-    }
+    sftp_attributes_free(attributes);
+    return 0;
   }
   else
   {
-    CLog::Log(LOGERROR, "SFTPSession: STAT - Not connected");
+    CLog::Log(LOGERROR, "SFTPSession: STAT - Failed to get attributes");
     return -1;
   }
 }
@@ -291,7 +282,6 @@ bool CSFTPSession::VerifyKnownHost(ssh_session session)
 
 bool CSFTPSession::Connect(const CStdString &host, unsigned int port, const CStdString &username, const CStdString &password)
 {
-  int timeout     = SFTP_TIMEOUT;
   m_connected     = false;
   m_session       = NULL;
   m_sftp_session  = NULL;
@@ -323,7 +313,7 @@ bool CSFTPSession::Connect(const CStdString &host, unsigned int port, const CStd
   }
 
   ssh_options_set(m_session, SSH_OPTIONS_LOG_VERBOSITY, 0);
-  ssh_options_set(m_session, SSH_OPTIONS_TIMEOUT, &timeout);  
+
 #else
   SSH_OPTIONS* options = ssh_options_new();
 
@@ -344,8 +334,6 @@ bool CSFTPSession::Connect(const CStdString &host, unsigned int port, const CStd
     CLog::Log(LOGERROR, "SFTPSession: Failed to set port '%d' for session", port);
     return false;
   }
-  
-  ssh_options_set_timeout(options, timeout, 0);
 
   ssh_options_set_log_verbosity(options, 0);
 
@@ -538,7 +526,7 @@ unsigned int CFileSFTP::Read(void* lpBuf, int64_t uiBufSize)
   {
     int rc = m_session->Read(m_sftp_handle, lpBuf, (size_t)uiBufSize);
 
-    if (rc >= 0)
+    if (rc > 0)
       return rc;
     else
       CLog::Log(LOGERROR, "SFTPFile: Failed to read %i", rc);

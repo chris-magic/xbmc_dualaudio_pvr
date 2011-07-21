@@ -35,8 +35,6 @@ typedef unsigned char   BYTE;
 #include <IOKit/ps/IOPSKeys.h>
 #endif
 
-#include "osx/DarwinUtils.h"
-
 // missing in 10.4/10.5 SDKs.
 #if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060)
 #define kIOPSNotifyLowBattery   "com.apple.system.powersources.lowbattery"
@@ -222,11 +220,6 @@ bool CCocoaPowerSyscall::HasBattery(void)
   }
 #endif
   return result;
-}
-
-int CCocoaPowerSyscall::BatteryLevel(void)
-{
-  return DarwinBatteryLevel();
 }
 
 bool CCocoaPowerSyscall::PumpPowerEvents(IPowerEventsCallback *callback)

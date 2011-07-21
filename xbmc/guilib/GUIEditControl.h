@@ -44,7 +44,6 @@ public:
                     INPUT_TYPE_TEXT = 0,
                     INPUT_TYPE_NUMBER,
                     INPUT_TYPE_SECONDS,
-                    INPUT_TYPE_TIME,
                     INPUT_TYPE_DATE,
                     INPUT_TYPE_IPADDRESS,
                     INPUT_TYPE_PASSWORD,
@@ -66,7 +65,6 @@ public:
 
   virtual void SetLabel(const std::string &text);
   virtual void SetLabel2(const std::string &text);
-  void SetHint(const CGUIInfoLabel& hint);
 
   virtual CStdString GetLabel2() const;
 
@@ -80,7 +78,7 @@ public:
   bool HasTextChangeActions() { return m_textChangeActions.size() > 0; };
 
 protected:
-  virtual void ProcessText(unsigned int currentTime);
+  virtual void RenderText();
   CStdStringW GetDisplayedText() const;
   void RecalcLabelPosition();
   void ValidateCursor();
@@ -96,7 +94,6 @@ protected:
   
   CStdStringW m_text2;
   CStdString  m_text;
-  CGUIInfoLabel m_hintInfo;
   float m_textOffset;
   float m_textWidth;
 

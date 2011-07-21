@@ -25,9 +25,9 @@
 #include "XBMC_vkeys.h"
 #include "Application.h"
 #include "WindowingFactory.h"
-#include "threads/CriticalSection.h"
+#include "XBMC_mutex.h"
 
-static CCriticalSection g_inputCond;
+static SDL_mutex *m_inputMutex = NULL;
 
 PHANDLE_EVENT_FUNC CWinEventsBase::m_pEventFunc = NULL;
 
@@ -35,17 +35,23 @@ static std::vector<XBMC_Event> events;
 
 void CWinEventsIOS::DeInit()
 {
+  if (m_inputMutex)
+    SDL_DestroyMutex(m_inputMutex);
+  m_inputMutex = NULL;
 }
 
 void CWinEventsIOS::Init()
 {
+  m_inputMutex = SDL_CreateMutex();
 }
 
 void CWinEventsIOS::MessagePush(XBMC_Event *newEvent)
 {
-  CSingleLock lock(g_inputCond);
+  SDL_mutexP(m_inputMutex);
 
   events.push_back(*newEvent);
+
+  SDL_mutexV(m_inputMutex);
 }
 
 bool CWinEventsIOS::MessagePump()
@@ -54,7 +60,7 @@ bool CWinEventsIOS::MessagePump()
   bool gotEvent = false;
   XBMC_Event pumpEvent;
 
-  CSingleLock lock(g_inputCond);
+  SDL_mutexP(m_inputMutex);  
   for (vector<XBMC_Event>::iterator it = events.begin(); it!=events.end(); ++it)
   {
     memcpy(&pumpEvent, (XBMC_Event *)&*it, sizeof(XBMC_Event));
@@ -62,7 +68,7 @@ bool CWinEventsIOS::MessagePump()
     gotEvent = true;
     break;
   }
-  lock.Leave();
+  SDL_mutexV(m_inputMutex);
 
   if (gotEvent)
   {

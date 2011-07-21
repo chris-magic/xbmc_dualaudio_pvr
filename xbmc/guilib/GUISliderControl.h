@@ -56,7 +56,6 @@ public:
   virtual ~CGUISliderControl(void);
   virtual CGUISliderControl *Clone() const { return new CGUISliderControl(*this); };
 
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
   virtual bool OnAction(const CAction &action);
   virtual void AllocResources();
@@ -82,7 +81,7 @@ public:
 protected:
   virtual bool HitTest(const CPoint &point) const;
   virtual EVENT_RESULT OnMouseEvent(const CPoint &point, const CMouseEvent &event);
-  virtual bool UpdateColors();
+  virtual void UpdateColors();
   virtual void Move(int iNumSteps);
   virtual void SetFromPosition(const CPoint &point);
   /*! \brief Get the current position of the slider as a proportion

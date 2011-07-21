@@ -61,25 +61,19 @@ void CGUIListGroup::AddControl(CGUIControl *control, int position /*= -1*/)
   CGUIControlGroup::AddControl(control, position);
 }
 
-void CGUIListGroup::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
+void CGUIListGroup::Render()
 {
-  CPoint pos(GetPosition());
   g_graphicsContext.SetOrigin(m_posX, m_posY);
-
-  CRect rect;
   for (iControls it = m_children.begin(); it != m_children.end(); ++it)
   {
     CGUIControl *control = *it;
+    GUIPROFILER_VISIBILITY_BEGIN(control);
     control->UpdateVisibility(m_item);
-    unsigned int oldDirty = dirtyregions.size();
-    control->DoProcess(currentTime, dirtyregions);
-    if (control->IsVisible() || (oldDirty != dirtyregions.size())) // visible or dirty (was visible?)
-      rect.Union(control->GetRenderRegion());
+    GUIPROFILER_VISIBILITY_END(control);
+    control->DoRender(m_renderTime);
   }
-
+  CGUIControl::Render();
   g_graphicsContext.RestoreOrigin();
-  CGUIControl::Process(currentTime, dirtyregions);
-  m_renderRegion = rect;
   m_item = NULL;
 }
 
@@ -114,60 +108,6 @@ void CGUIListGroup::UpdateInfo(const CGUIListItem *item)
           CGUIListLabel::CheckAndCorrectOverlap(*(CGUIListLabel *)m_children[i], *(CGUIListLabel *)m_children[j]);
       }
     }
-  }
-}
-
-void CGUIListGroup::EnlargeWidth(float difference)
-{
-  // Alters the width of the controls that have an ID of 1
-  for (iControls it = m_children.begin(); it != m_children.end(); it++)
-  {
-    CGUIControl *child = *it;
-    if (child->GetID() >= 1 && child->GetID() <= 14)
-    {
-      if (child->GetID() == 1) // label
-      {
-        child->SetWidth(child->GetWidth() + difference - 10);
-        child->SetVisible(child->GetWidth() > 10); ///
-      }
-      else
-      {
-        child->SetWidth(child->GetWidth() + difference);
-      }
-    }
-  }
-  SetInvalid();
-}
-
-void CGUIListGroup::EnlargeHeight(float difference)
-{
-  // Alters the width of the controls that have an ID of 1
-  for (iControls it = m_children.begin(); it != m_children.end(); it++)
-  {
-    CGUIControl *child = *it;
-    if (child->GetID() >= 1 && child->GetID() <= 14)
-    {
-      if (child->GetID() == 1) // label
-      {
-        child->SetHeight(child->GetHeight() + difference);
-        child->SetVisible(child->GetHeight() > 10); ///
-      }
-      else
-      {
-        child->SetHeight(child->GetHeight() + difference);
-      }
-    }
-  }
-  SetInvalid();
-}
-
-void CGUIListGroup::SetInvalid()
-{
-  if (!m_bInvalidated)
-  { // this can be triggered by an item change, so all children need invalidating rather than just the group
-    for (iControls it = m_children.begin(); it != m_children.end(); ++it)
-      (*it)->SetInvalid();
-    CGUIControlGroup::SetInvalid();
   }
 }
 

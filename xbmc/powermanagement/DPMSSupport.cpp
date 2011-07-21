@@ -207,10 +207,12 @@ bool DPMSSupport::PlatformSpecificEnablePowerSaving(PowerSavingMode mode)
   {
   case OFF:
     // Turn off display
-    return SendMessage(g_Windowing.GetHwnd(), WM_SYSCOMMAND, SC_MONITORPOWER, (LPARAM) 2) == 0;
+    SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, (LPARAM) 2);
+    break;
   case STANDBY:
     // Set display to low power
-    return SendMessage(g_Windowing.GetHwnd(), WM_SYSCOMMAND, SC_MONITORPOWER, (LPARAM) 1) == 0;
+    SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, (LPARAM) 1);
+    break;
   }
   return true;
 }
@@ -218,7 +220,8 @@ bool DPMSSupport::PlatformSpecificEnablePowerSaving(PowerSavingMode mode)
 bool DPMSSupport::PlatformSpecificDisablePowerSaving()
 {
   // Turn display on
-  return SendMessage(g_Windowing.GetHwnd(), WM_SYSCOMMAND, SC_MONITORPOWER, (LPARAM) -1) == 0;
+  SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, (LPARAM) -1);
+  return true;
 }
 
 #elif defined(__APPLE__) && !defined(__arm__)

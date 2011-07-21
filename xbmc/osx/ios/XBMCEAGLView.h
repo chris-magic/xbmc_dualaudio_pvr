@@ -34,14 +34,13 @@
   GLint framebufferWidth;
   GLint framebufferHeight;
   // The OpenGL ES names for the framebuffer and renderbuffer used to render to this view.
-  GLuint defaultFramebuffer, colorRenderbuffer, depthRenderbuffer;
+  GLuint defaultFramebuffer, colorRenderbuffer;
 	// the shader program object
 	GLuint program;
 	//
 	GLfloat rotz;
 	
 	BOOL animating;
-  BOOL xbmcAlive;
   BOOL pause;
   NSConditionLock* animationThreadLock;
   NSThread* animationThread;
@@ -53,7 +52,6 @@
 	BOOL displayLinkSupported;
 }
 @property (readonly, nonatomic, getter=isAnimating) BOOL animating;
-@property (readonly, nonatomic, getter=isXBMCAlive) BOOL xbmcAlive;
 @property (readonly, nonatomic, getter=isPause) BOOL pause;
 
 - (void) initDisplayLink;

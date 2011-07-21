@@ -27,6 +27,8 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include <utils/log.h>
+
 
 /*
  ** The following two functions together make up an itoa()

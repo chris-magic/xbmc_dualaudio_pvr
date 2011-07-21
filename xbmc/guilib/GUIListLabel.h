@@ -41,13 +41,11 @@ public:
   virtual ~CGUIListLabel(void);
   virtual CGUIListLabel *Clone() const { return new CGUIListLabel(*this); };
 
-  virtual void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions);
   virtual void Render();
   virtual bool CanFocus() const { return false; };
   virtual void UpdateInfo(const CGUIListItem *item = NULL);
   virtual void SetFocus(bool focus);
   virtual void SetInvalid();
-  virtual void SetWidth(float width);
 
   void SetLabel(const CStdString &label);
   void SetSelected(bool selected);
@@ -57,11 +55,9 @@ public:
   {
     CGUILabel::CheckAndCorrectOverlap(label1.m_label, label2.m_label);
   }
-
-  virtual CRect CalcRenderRegion() const;
-
+  
 protected:
-  virtual bool UpdateColors();
+  virtual void UpdateColors();
 
   CGUILabel     m_label;
   CGUIInfoLabel m_info;

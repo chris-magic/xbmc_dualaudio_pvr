@@ -1,5 +1,4 @@
 SRCS=AdvancedSettings.cpp \
-     AppParamParser.cpp \
      GUIDialogContentSettings.cpp \
      GUIDialogLockSettings.cpp \
      GUIDialogProfileSettings.cpp \

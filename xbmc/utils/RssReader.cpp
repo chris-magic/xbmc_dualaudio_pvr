@@ -117,7 +117,7 @@ void CRssReader::Process()
 {
   while (GetQueueSize())
   {
-    CSingleLock lock(*this);
+    EnterCriticalSection(*this);
 
     int iFeed = m_vecQueue.front();
     m_vecQueue.erase(m_vecQueue.begin());
@@ -130,7 +130,8 @@ void CRssReader::Process()
     http.SetTimeout(2);
     CStdString strXML;
     CStdString strUrl = m_vecUrls[iFeed];
-    lock.Leave();
+
+    LeaveCriticalSection(*this);
 
     int nRetries = 3;
     CURL url(strUrl);
@@ -413,9 +414,10 @@ void CRssReader::UpdateObserver()
   getFeed(feed);
   if (feed.size() > 0)
   {
-    CSingleLock lock(g_graphicsContext);
+    g_graphicsContext.Lock();
     if (m_pObserver) // need to check again when locked to make sure observer wasnt removed
       m_pObserver->OnFeedUpdate(feed);
+    g_graphicsContext.Unlock();
   }
 }
 

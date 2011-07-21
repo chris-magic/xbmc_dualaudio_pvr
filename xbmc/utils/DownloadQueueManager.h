@@ -44,7 +44,7 @@ protected:
   typedef std::vector<CDownloadQueue*> QUEUEPOOL;
   QUEUEPOOL m_queues;
 
-  CCriticalSection m_critical;
+  CRITICAL_SECTION m_critical;
 };
 
 // Single global instance of class is in cpp file

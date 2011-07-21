@@ -75,7 +75,7 @@ static const TypeMapping types[] =
    {"xbmc.gui.skin",                     ADDON_SKIN,                  166, "DefaultAddonSkin.png" },
    {"xbmc.gui.webinterface",             ADDON_WEB_INTERFACE,         199, "DefaultAddonWebSkin.png" },
    {"xbmc.addon.repository",             ADDON_REPOSITORY,          24011, "DefaultAddonRepository.png" },
-   {"xbmc.pvrclient",                    ADDON_PVRDLL,              24019, "" },
+   {"pvrclient",                         ADDON_PVRDLL,                  0, "" },
    {"xbmc.addon.video",                  ADDON_VIDEO,                1037, "DefaultAddonVideo.png" },
    {"xbmc.addon.audio",                  ADDON_AUDIO,                1038, "DefaultAddonMusic.png" },
    {"xbmc.addon.image",                  ADDON_IMAGE,                1039, "DefaultAddonPicture.png" },
@@ -118,6 +118,48 @@ const CStdString GetIcon(const ADDON::TYPE& type)
       return map.icon;
   }
   return "";
+}
+
+/**
+ * AddonVersion
+ *
+ */
+
+bool AddonVersion::operator==(const AddonVersion &rhs) const
+{
+  return str.Equals(rhs.str);
+}
+
+bool AddonVersion::operator!=(const AddonVersion &rhs) const
+{
+  return !(*this == rhs);
+}
+
+bool AddonVersion::operator>(const AddonVersion &rhs) const
+{
+  return (strverscmp(str.c_str(), rhs.str.c_str()) > 0);
+}
+
+bool AddonVersion::operator>=(const AddonVersion &rhs) const
+{
+  return (*this == rhs) || (*this > rhs);
+}
+
+bool AddonVersion::operator<(const AddonVersion &rhs) const
+{
+  return (strverscmp(str.c_str(), rhs.str.c_str()) < 0);
+}
+
+bool AddonVersion::operator<=(const AddonVersion &rhs) const
+{
+  return (*this == rhs) || !(*this > rhs);
+}
+
+CStdString AddonVersion::Print() const
+{
+  CStdString out;
+  out.Format("%s %s", g_localizeStrings.Get(24051), str); // "Version <str>"
+  return CStdString(out);
 }
 
 #define EMPTY_IF(x,y) \
@@ -281,9 +323,6 @@ void CAddon::BuildLibName(const cp_extension_t *extension)
     case ADDON_VIZ:
       ext = ADDON_VIS_EXT;
       break;
-    case ADDON_PVRDLL:
-      ext = ADDON_PVRDLL_EXT;
-      break;
     case ADDON_SCRIPT:
     case ADDON_SCRIPT_LIBRARY:
     case ADDON_SCRIPT_LYRICS:
@@ -319,7 +358,6 @@ void CAddon::BuildLibName(const cp_extension_t *extension)
       case ADDON_SCRAPER_MUSICVIDEOS:
       case ADDON_SCRAPER_TVSHOWS:
       case ADDON_SCRAPER_LIBRARY:
-      case ADDON_PVRDLL:
       case ADDON_PLUGIN:
       case ADDON_SERVICE:
         {

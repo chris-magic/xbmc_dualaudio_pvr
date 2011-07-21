@@ -33,7 +33,9 @@ CGUIFadeLabelControl::CGUIFadeLabelControl(int parentID, int controlID, float po
   ControlType = GUICONTROL_FADELABEL;
   m_scrollOut = scrollOut;
   m_fadeAnim = CAnimation::CreateFader(100, 0, timeToDelayAtEnd, 200);
-  m_fadeAnim.ApplyAnimation();
+  if (m_fadeAnim)
+    m_fadeAnim->ApplyAnimation();
+  m_renderTime = 0;
   m_lastLabel = -1;
   m_scrollSpeed = labelInfo.scrollSpeed;  // save it for later
   m_resetOnLabelChange = resetOnLabelChange;
@@ -48,15 +50,19 @@ CGUIFadeLabelControl::CGUIFadeLabelControl(const CGUIFadeLabelControl &from)
   m_scrollSpeed = from.m_scrollSpeed;
   m_resetOnLabelChange = from.m_resetOnLabelChange;
 
-  m_fadeAnim = from.m_fadeAnim;
-  m_fadeAnim.ApplyAnimation();
+  if (from.m_fadeAnim)
+    m_fadeAnim = new CAnimation(*from.m_fadeAnim);
+  if (m_fadeAnim)
+    m_fadeAnim->ApplyAnimation();
   m_currentLabel = 0;
+  m_renderTime = 0;
   m_lastLabel = -1;
   ControlType = GUICONTROL_FADELABEL;
 }
 
 CGUIFadeLabelControl::~CGUIFadeLabelControl(void)
 {
+  delete m_fadeAnim;
 }
 
 void CGUIFadeLabelControl::SetInfo(const vector<CGUIInfoLabel> &infoLabels)
@@ -70,12 +76,24 @@ void CGUIFadeLabelControl::AddLabel(const string &label)
   m_infoLabels.push_back(CGUIInfoLabel(label));
 }
 
-void CGUIFadeLabelControl::Process(unsigned int currentTime, CDirtyRegionList &dirtyregions)
+void CGUIFadeLabelControl::DoRender(unsigned int currentTime)
+{
+  m_renderTime = currentTime;
+  CGUIControl::DoRender(currentTime);
+}
+
+void CGUIFadeLabelControl::UpdateColors()
+{
+  m_label.UpdateColors();
+  CGUIControl::UpdateColors();
+}
+
+void CGUIFadeLabelControl::Render()
 {
   if (m_infoLabels.size() == 0 || !m_label.font)
-  {
-    CGUIControl::Process(currentTime, dirtyregions);
-    return;
+  { // nothing to render
+    CGUIControl::Render();
+    return ;
   }
 
   if (m_currentLabel >= m_infoLabels.size() )
@@ -83,7 +101,6 @@ void CGUIFadeLabelControl::Process(unsigned int currentTime, CDirtyRegionList &d
 
   if (m_textLayout.Update(GetLabel()))
   { // changed label - update our suffix based on length of available text
-    MarkDirtyRegion();
     float width, height;
     m_textLayout.GetTextExtent(width, height);
     float spaceWidth = m_label.font->GetCharWidth(L' ');
@@ -95,78 +112,14 @@ void CGUIFadeLabelControl::Process(unsigned int currentTime, CDirtyRegionList &d
     if (m_resetOnLabelChange)
     {
       m_scrollInfo.Reset();
-      m_fadeAnim.ResetAnimation();
+      m_fadeAnim->ResetAnimation();
     }
   }
   if (m_currentLabel != m_lastLabel)
   { // new label - reset scrolling
     m_scrollInfo.Reset();
-    m_fadeAnim.QueueAnimation(ANIM_PROCESS_REVERSE);
+    m_fadeAnim->QueueAnimation(ANIM_PROCESS_REVERSE);
     m_lastLabel = m_currentLabel;
-  }
-
-  if (m_infoLabels.size() > 1 || !m_shortText)
-  { // have scrolling text
-    MarkDirtyRegion();
-
-    bool moveToNextLabel = false;
-    if (!m_scrollOut)
-    {
-      vecText text;
-      m_textLayout.GetFirstText(text);
-      if (m_scrollInfo.characterPos && m_scrollInfo.characterPos < text.size())
-        text.erase(text.begin(), text.begin() + min((int)m_scrollInfo.characterPos - 1, (int)text.size()));
-      if (m_label.font->GetTextWidth(text) < m_width)
-      {
-        if (m_fadeAnim.GetProcess() != ANIM_PROCESS_NORMAL)
-          m_fadeAnim.QueueAnimation(ANIM_PROCESS_NORMAL);
-        moveToNextLabel = true;
-      }
-    }
-    else if (m_scrollInfo.characterPos > m_textLayout.GetTextLength())
-      moveToNextLabel = true;
-    
-    // apply the fading animation
-    TransformMatrix matrix;
-    m_fadeAnim.Animate(currentTime, true);
-    m_fadeAnim.RenderAnimation(matrix);
-    m_fadeMatrix = g_graphicsContext.AddTransform(matrix);
-    
-    if (m_fadeAnim.GetState() == ANIM_STATE_APPLIED)
-      m_fadeAnim.ResetAnimation();
-    
-    m_scrollInfo.SetSpeed((m_fadeAnim.GetProcess() == ANIM_PROCESS_NONE) ? m_scrollSpeed : 0);
-
-    if (moveToNextLabel)
-    { // increment the label and reset scrolling
-      if (m_fadeAnim.GetProcess() != ANIM_PROCESS_NORMAL)
-      {
-        if (++m_currentLabel >= m_infoLabels.size())
-          m_currentLabel = 0;
-        m_scrollInfo.Reset();
-        m_fadeAnim.QueueAnimation(ANIM_PROCESS_REVERSE);
-      }
-    }
-    g_graphicsContext.RemoveTransform();
-  }
-
-  CGUIControl::Process(currentTime, dirtyregions);
-}
-
-bool CGUIFadeLabelControl::UpdateColors()
-{
-  bool changed = CGUIControl::UpdateColors();
-  changed |= m_label.UpdateColors();
-
-  return changed;
-}
-
-void CGUIFadeLabelControl::Render()
-{
-  if (!m_label.font)
-  { // nothing to render
-    CGUIControl::Render();
-    return ;
   }
 
   float posY = m_posY;
@@ -184,8 +137,34 @@ void CGUIFadeLabelControl::Render()
     return;
   }
 
-  // render the scrolling text
-  g_graphicsContext.SetTransform(m_fadeMatrix);
+  bool moveToNextLabel = false;
+  if (!m_scrollOut)
+  {
+    vecText text;
+    m_textLayout.GetFirstText(text);
+    if (m_scrollInfo.characterPos && m_scrollInfo.characterPos < text.size())
+      text.erase(text.begin(), text.begin() + min((int)m_scrollInfo.characterPos - 1, (int)text.size()));
+    if (m_label.font->GetTextWidth(text) < m_width)
+    {
+      if (m_fadeAnim->GetProcess() != ANIM_PROCESS_NORMAL)
+        m_fadeAnim->QueueAnimation(ANIM_PROCESS_NORMAL);
+      moveToNextLabel = true;
+    }
+  }
+  else if (m_scrollInfo.characterPos > m_textLayout.GetTextLength())
+    moveToNextLabel = true;
+
+  // apply the fading animation
+  TransformMatrix matrix;
+  m_fadeAnim->Animate(m_renderTime, true);
+  m_fadeAnim->RenderAnimation(matrix);
+  g_graphicsContext.AddTransform(matrix);
+
+  if (m_fadeAnim->GetState() == ANIM_STATE_APPLIED)
+    m_fadeAnim->ResetAnimation();
+
+  m_scrollInfo.SetSpeed((m_fadeAnim->GetProcess() == ANIM_PROCESS_NONE) ? m_scrollSpeed : 0);
+
   if (!m_scrollOut && m_shortText)
   {
     float posX = m_posX + m_label.offsetX;
@@ -197,7 +176,20 @@ void CGUIFadeLabelControl::Render()
   }
   else
     m_textLayout.RenderScrolling(m_posX, posY, 0, m_label.textColor, m_label.shadowColor, (m_label.align & ~3), m_width, m_scrollInfo);
+
+  if (moveToNextLabel)
+  { // increment the label and reset scrolling
+    if (m_fadeAnim->GetProcess() != ANIM_PROCESS_NORMAL)
+    {
+      if (++m_currentLabel >= m_infoLabels.size())
+        m_currentLabel = 0;
+      m_scrollInfo.Reset();
+      m_fadeAnim->QueueAnimation(ANIM_PROCESS_REVERSE);
+    }
+  }
+
   g_graphicsContext.RemoveTransform();
+
   CGUIControl::Render();
 }
 
@@ -215,14 +207,12 @@ bool CGUIFadeLabelControl::OnMessage(CGUIMessage& message)
     if (message.GetMessage() == GUI_MSG_LABEL_ADD)
     {
       AddLabel(message.GetLabel());
-      return true;
     }
     if (message.GetMessage() == GUI_MSG_LABEL_RESET)
     {
       m_lastLabel = -1;
       m_infoLabels.clear();
       m_scrollInfo.Reset();
-      return true;
     }
     if (message.GetMessage() == GUI_MSG_LABEL_SET)
     {
@@ -230,7 +220,6 @@ bool CGUIFadeLabelControl::OnMessage(CGUIMessage& message)
       m_infoLabels.clear();
       m_scrollInfo.Reset();
       AddLabel(message.GetLabel());
-      return true;
     }
   }
   return CGUIControl::OnMessage(message);

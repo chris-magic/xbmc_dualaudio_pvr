@@ -61,7 +61,7 @@ public:
   void Process();
 
   void PulseGlobalEvent();
-  void WaitForEvent(CEvent& hEvent, unsigned int timeout);
+  void WaitForEvent(HANDLE hEvent, unsigned int timeout);
 
   int ScriptsSize();
   int GetPythonScriptId(int scriptPosition);
@@ -110,6 +110,7 @@ private:
   void*             m_mainThreadState;
   ThreadIdentifier  m_ThreadId;
   bool              m_bInitialized;
+  HANDLE            m_hEvent;
   int               m_iDllScriptCounter; // to keep track of the total scripts running that need the dll
   HMODULE           m_hModule;
   unsigned int      m_endtime;
@@ -120,7 +121,7 @@ private:
   LibraryLoader*      m_pDll;
 
   // any global events that scripts should be using
-  CEvent m_globalEvent;
+  HANDLE m_globalEvent;
 
   // in order to finalize and unload the python library, need to save all the extension libraries that are
   // loaded by it and unload them first (not done by finalize)
